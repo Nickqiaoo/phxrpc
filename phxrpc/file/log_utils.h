@@ -32,15 +32,16 @@ namespace phxrpc {
 extern void openlog(const char *argv0, const char *log_dir, int priority);
 extern void closelog();
 
-extern void log(int priority, const char *format, ...) __attribute__((format(printf, 2, 3)));
+extern void log(int priority, const char *format, ...) __attribute__((format(printf, 2, 3)));  
+                                //按printf的格式检查参数，第二个参数为格式化字符串，从第三个参数开始检查
 
-typedef void (*openlog_t)(const char *, const char *, int);
-typedef void (*closelog_t)();
+typedef void (*openlog_t)(const char *, const char *, int);  //连接syslogd
+typedef void (*closelog_t)();  //关闭连接
 
-typedef void (*vlog_t)(int, const char *, va_list);
+typedef void (*vlog_t)(int, const char *, va_list);  //向syslogd写日志
 extern void setvlog(vlog_t);
 
-extern void setlog(openlog_t, closelog_t, vlog_t);
+extern void setlog(openlog_t, closelog_t, vlog_t);  //设置三个函数指针
 
 
 }  // namespace phxrpc

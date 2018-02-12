@@ -27,7 +27,7 @@ namespace phxrpc {
 
 class FileUtils {
 public:
-    static bool ReadFile(const char * path, std::string * content);
+    static bool ReadFile(const char * path, std::string * content);  //从path读配置文件到content
 
 private:
     FileUtils();

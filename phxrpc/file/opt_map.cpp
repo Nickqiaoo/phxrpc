@@ -29,7 +29,7 @@ See the AUTHORS file for names of contributors.
 namespace phxrpc {
 
 OptMap::OptMap(const char * optstring) {
-    opt_string_ = strdup(optstring);
+    opt_string_ = strdup(optstring);  //strdup()复制字符串:malloc()复制后返回地址
 }
 
 OptMap::~OptMap() {
@@ -42,15 +42,15 @@ bool OptMap::Parse(int argc, char * argv[]) {
 
     int c = 0;
 
-    while ((c = getopt(argc, argv, opt_string_)) != EOF) {
-        if ('?' == c || ':' == c) {
+    while ((c = getopt(argc, argv, opt_string_)) != EOF) { //依次返回每个选项
+        if ('?' == c || ':' == c) {//不在定义中返回?
             ret = false;
         } else {
-            opt_[c].push_back((NULL == ::optarg) ? "" : ::optarg);
+            opt_[c].push_back((NULL == ::optarg) ? "" : ::optarg);  //optarg指向选项的参数
         }
     }
 
-    for (int i = optind; i < argc; i++) {
+    for (int i = optind; i < argc; i++) {  //optind指向下一个要解析的参数位置
         non_opt_.push_back(argv[i]);
     }
 
@@ -108,7 +108,7 @@ bool OptMap::GetUInt(char c, unsigned int * val, size_t index) const {
     const char * tmp = Get(c, index);
 
     if (NULL != tmp)
-        *val = strtoul(tmp, NULL, 10);
+        *val = strtoul(tmp, NULL, 10); //转换成unsigned long 10进制，第二个参数是字符串有效数字的结束地址
 
     return NULL != tmp;
 }

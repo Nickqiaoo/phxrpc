@@ -36,7 +36,7 @@ namespace phxrpc {
 bool FileUtils::ReadFile(const char * path, std::string * content) {
 
     char newpath[ 1024 ] = { 0 };
-    if( '~' == path[0] ) {
+    if( '~' == path[0] ) {  //获取家目录环境变量
         snprintf( newpath, sizeof( newpath ), "%s%s", getenv( "HOME" ), path + 1 );
     } else {
         snprintf( newpath, sizeof( newpath ), "%s", path );
@@ -48,7 +48,7 @@ bool FileUtils::ReadFile(const char * path, std::string * content) {
     if (fd >= 0) {
         struct stat file_stat;
         if (0 == fstat(fd, &file_stat)) {
-            content->resize(file_stat.st_size);
+            content->resize(file_stat.st_size);  //调整content大小和文件相同
 
             if (read(fd, (char*) content->data(), file_stat.st_size) == file_stat.st_size) {
                 ret = true;

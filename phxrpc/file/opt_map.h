@@ -41,16 +41,16 @@ class OptMap {
 
     const char * Get(char c, size_t index = 0) const;
 
-    bool GetInt(char c, int * val, size_t index = 0) const;
+    bool GetInt(char c, int * val, size_t index = 0) const;  //将选项的参数转换成int
 
-    bool GetUInt(char c, unsigned int * val, size_t index = 0) const;
+    bool GetUInt(char c, unsigned int * val, size_t index = 0) const;  //转换成unsigned long
 
     size_t GetNonOptCount();
 
     const char * GetNonOpt(size_t index);
 
  private:
-    char * opt_string_;
+    char * opt_string_;  //选项字符串  a:bc表示-a -b -c :表示a后面要跟参数
 
     typedef std::map<char, std::vector<const char *>, std::less<char> > option_map_;
     option_map_ opt_;
