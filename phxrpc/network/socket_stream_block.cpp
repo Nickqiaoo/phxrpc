@@ -112,7 +112,7 @@ int BlockTcpStream :: LastError() {
 //
 bool BlockTcpUtils::Open(BlockTcpStream * stream, const char * ip, unsigned short port, int connect_timeout_ms,
                     const char * bind_addr, int bind_port) {
-    if (INADDR_NONE == inet_addr(ip)) {
+    if (INADDR_NONE == inet_addr(ip)) {  //IP地址非法
         phxrpc::log(LOG_ERR, "Invalid ip [%s]", ip);
         return false;
     }
@@ -135,7 +135,7 @@ bool BlockTcpUtils::Open(BlockTcpStream * stream, const char * ip, unsigned shor
 
     if (NULL != bind_addr && '\0' != *bind_addr) {
         in_addr.sin_addr.s_addr = inet_addr(bind_addr);
-        in_addr.sin_port = bind_port;
+        in_addr.sin_port = bind_port;  //htons？
         if (bind(sockfd, (struct sockaddr *) &in_addr, sizeof(in_addr)) < 0) {
             phxrpc::log(LOG_WARNING, "WARN: bind( %d, %s, ... ) fail", sockfd, bind_addr);
         }
@@ -148,7 +148,7 @@ bool BlockTcpUtils::Open(BlockTcpStream * stream, const char * ip, unsigned shor
 
     int error = 0;
     int ret = connect(sockfd, (struct sockaddr*) &in_addr, sizeof(in_addr));
-
+    //非阻塞connect需要select或poll后getsockopt检查是否连接成功
     if (0 != ret && ((errno != EINPROGRESS) && (errno != EAGAIN))) {
         phxrpc::log(LOG_ERR, "connect(%d{%s:%d}) errno %d, %s", sockfd, ip, port, errno, strerror(errno));
         error = -1;
@@ -171,7 +171,7 @@ bool BlockTcpUtils::Open(BlockTcpStream * stream, const char * ip, unsigned shor
     }
 
     if (0 == error) {
-        if (BaseTcpUtils::SetNonBlock(sockfd, false)
+        if (BaseTcpUtils::SetNonBlock(sockfd, false)  //设为阻塞
                 && BaseTcpUtils::SetNoDelay(sockfd, true)) {
             stream->Attach(sockfd);
         } else {

@@ -41,10 +41,10 @@ namespace phxrpc {
 
 BaseTcpStreamBuf::BaseTcpStreamBuf(size_t buf_size)
         : buf_size_(buf_size) {
-    char * gbuf = new char[buf_size_];
-    char * pbuf = new char[buf_size_];
+    char * gbuf = new char[buf_size_];  //读buffer
+    char * pbuf = new char[buf_size_];  //写buffer
 
-    setg(gbuf, gbuf, gbuf);
+    setg(gbuf, gbuf, gbuf);  //设置初始，当前，结尾指针
     setp(pbuf, pbuf + buf_size_);
 }
 
@@ -64,7 +64,7 @@ int BaseTcpStreamBuf::underflow() {
     }
 }
 
-int BaseTcpStreamBuf::sync() {
+int BaseTcpStreamBuf::sync() { //将写缓冲区中已写的字符发送
     int sent = 0;
     int total = pptr() - pbase();
     while (sent < total) {
@@ -78,7 +78,7 @@ int BaseTcpStreamBuf::sync() {
     }
 
     setp(pbase(), pbase() + buf_size_);
-    pbump(0);
+    pbump(0);  //？
 
     return 0;
 }
@@ -106,7 +106,7 @@ BaseTcpStream::~BaseTcpStream() {
     delete rdbuf();
 }
 
-void BaseTcpStream::NewRdbuf(BaseTcpStreamBuf * buf) {
+void BaseTcpStream::NewRdbuf(BaseTcpStreamBuf * buf) {  //设置缓冲
     std::streambuf * old = rdbuf(buf);
     delete old;
 }
@@ -128,7 +128,7 @@ bool BaseTcpStream::GetRemoteHost(char * ip, size_t size, int * port) {
 }
 
 std::istream & BaseTcpStream::getlineWithTrimRight(char * line, size_t size) {
-    if (getline(line, size).good()) {
+    if (getline(line, size).good()) {  //istream的getline  .good()检查是否有错误
         for (char * pos = line + gcount() - 1; pos >= line; pos--) {
             if ('\0' == *pos || '\r' == *pos || '\n' == *pos) {
                 *pos = '\0';

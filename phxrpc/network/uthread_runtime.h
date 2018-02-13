@@ -49,13 +49,13 @@ private:
             next_done_item = -1;
         }
         UThreadContext * context;
-        int next_done_item;
+        int next_done_item;  //保存下一个可用下标
         int status;
     };
 
     size_t stack_size_;
     std::vector<ContextSlot> context_list_;
-    int first_done_item_;
+    int first_done_item_; //保存一个可用下标
     int current_uthread_;
     int unfinished_item_count_;
     bool need_stack_protect_;

@@ -53,7 +53,7 @@ void UThreadContextSystem :: Make(UThreadFunc_t func, void * args) {
     context_.uc_link = GetMainContext();
     uintptr_t ptr = (uintptr_t)this;
     makecontext(&context_, (void (*)(void))UThreadContextSystem::UThreadFuncWrapper, 
-            2, (uint32_t)ptr, (uint32_t)(ptr >> 32));
+            2, (uint32_t)ptr, (uint32_t)(ptr >> 32));  //makecontext参数为int所以拆成两个32位
 }
 
 bool UThreadContextSystem :: Resume() {
@@ -67,7 +67,7 @@ bool UThreadContextSystem :: Yield() {
 }
 
 ucontext_t * UThreadContextSystem :: GetMainContext() {
-    static __thread ucontext_t main_context;
+    static __thread ucontext_t main_context;  //每个线程只有一个
     return &main_context;
 }
 

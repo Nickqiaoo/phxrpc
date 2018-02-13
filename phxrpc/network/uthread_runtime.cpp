@@ -38,7 +38,7 @@ UThreadRuntime :: UThreadRuntime(size_t stack_size, const bool need_stack_protec
     current_uthread_(-1), unfinished_item_count_(0),
     need_stack_protect_(need_stack_protect) {
     if (UThreadContext::GetContextCreateFunc() == nullptr) {
-        UThreadContext::SetContextCreateFunc(UThreadContextSystem::DoCreate);
+        UThreadContext::SetContextCreateFunc(UThreadContextSystem::DoCreate);  //设置基类Create调用的函数
     }
 }
 
@@ -48,20 +48,20 @@ UThreadRuntime :: ~UThreadRuntime() {
     }
 }
 
-int UThreadRuntime :: Create(UThreadFunc_t func, void * args) {
+int UThreadRuntime :: Create(UThreadFunc_t func, void * args) {  //创建协程
     if (func == nullptr) {
         return -2;
     }
     int index = -1;
-    if (first_done_item_ >= 0) {
+    if (first_done_item_ >= 0) { //如果有已经执行完的协程
         index = first_done_item_;
         first_done_item_ = context_list_[index].next_done_item;
-        context_list_[index].context->Make(func, args);
+        context_list_[index].context->Make(func, args);  //直接更换上下文
     } else {
         index = context_list_.size();
         auto new_context = UThreadContext::Create(stack_size_, func, args, 
                 std::bind(&UThreadRuntime::UThreadDoneCallback, this),
-                need_stack_protect_);
+                need_stack_protect_); //创建一个新上下文
         assert(new_context != nullptr);
         ContextSlot context_slot;
         context_slot.context = new_context;
@@ -69,12 +69,12 @@ int UThreadRuntime :: Create(UThreadFunc_t func, void * args) {
     }
 
     context_list_[index].next_done_item = -1;
-    context_list_[index].status = UTHREAD_SUSPEND;
+    context_list_[index].status = UTHREAD_SUSPEND;  //设置为暂停
     unfinished_item_count_++;
     return index;
 }
 
-void UThreadRuntime :: UThreadDoneCallback() {
+void UThreadRuntime :: UThreadDoneCallback() {  //协程执行完的回调
     if (current_uthread_ != -1) {
         ContextSlot & context_slot = context_list_[current_uthread_];
         context_slot.next_done_item = first_done_item_;
@@ -85,7 +85,7 @@ void UThreadRuntime :: UThreadDoneCallback() {
     }
 } 
 
-bool UThreadRuntime :: Resume(size_t index) {
+bool UThreadRuntime :: Resume(size_t index) {  //执行协程
     if (index >= context_list_.size()) {
         return false;
     }
@@ -100,7 +100,7 @@ bool UThreadRuntime :: Resume(size_t index) {
     return false;
 }
 
-bool UThreadRuntime :: Yield() {
+bool UThreadRuntime :: Yield() {  //暂停协程
     if (current_uthread_ != -1) {
         auto context_slot = context_list_[current_uthread_];
         current_uthread_ = -1;

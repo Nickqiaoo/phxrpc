@@ -41,14 +41,14 @@ public:
             UThreadFunc_t func, void * args, UThreadDoneCallback_t callback,
             const bool need_stack_protect);
 
-    void Make(UThreadFunc_t func, void * args) override;
+    void Make(UThreadFunc_t func, void * args) override;  //创建协程
     bool Resume() override;
     bool Yield() override;
 
     ucontext_t * GetMainContext();
 
 private:
-    static void UThreadFuncWrapper(uint32_t low32, uint32_t high32);
+    static void UThreadFuncWrapper(uint32_t low32, uint32_t high32);//协程执行的包装函数
 
     ucontext_t context_;
     UThreadFunc_t func_;
