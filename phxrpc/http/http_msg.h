@@ -30,7 +30,7 @@ See the AUTHORS file for names of contributors.
 namespace phxrpc {
 
 
-class HttpMessage : virtual public BaseMessage {
+class HttpMessage : virtual public BaseMessage {  //保存请求头的内容
   public:
     static const char *HEADER_CONTENT_LENGTH;
     static const char *HEADER_CONTENT_TYPE;
@@ -109,8 +109,8 @@ class HttpResponse : public HttpMessage, public BaseResponse {
     const char *GetReasonPhrase() const;
 
   private:
-    int status_code_;
-    char reason_phrase_[128];
+    int status_code_;  //200
+    char reason_phrase_[128];  //OK
 };
 
 

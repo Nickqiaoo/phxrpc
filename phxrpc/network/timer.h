@@ -40,7 +40,7 @@ class Timer {
     const int GetNextTimeout() const;
     const bool empty();
     static const uint64_t GetTimestampMS();
-    static const uint64_t GetSteadyClockMS();
+    static const uint64_t GetSteadyClockMS();  //获取时钟tick，保证不会变小
     static void MsSleep(const int time_ms);
     std::vector<UThreadSocket_t *> GetSocketList();
 

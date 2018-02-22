@@ -49,7 +49,7 @@ public:
     virtual bool Yield() = 0;
 
 private:
-    static ContextCreateFunc_t context_create_func_;
+    static ContextCreateFunc_t context_create_func_;  //create时调用子类对应的函数
 };
 
 } //namespace phxrpc

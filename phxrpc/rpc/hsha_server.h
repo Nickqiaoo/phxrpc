@@ -59,7 +59,7 @@ class DataFlow final {
     void BreakOut();
 
   private:
-    struct QueueExtData {
+    struct QueueExtData { 
         QueueExtData() {
             enqueue_time_ms = 0;
             args = nullptr;

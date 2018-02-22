@@ -89,9 +89,9 @@ bool Config::ReadItem(const char * section, const char * key, char * value, size
     snprintf(tmp_key, sizeof(tmp_key), "\n%s", key);
 
     const char * end_pos = NULL;
-    const char * pos = strstr(content_.c_str(), tmp_section);
+    const char * pos = strstr(content_.c_str(), tmp_section);  //字符串tmp_section在content_中的首次出现
     if (NULL != pos) {
-        pos = strchr(pos + 1, '\n');
+        pos = strchr(pos + 1, '\n');  //字符\n在pos+1之后的位置
         if (NULL == pos)
             pos = strchr(content_.c_str(), '\0');
 

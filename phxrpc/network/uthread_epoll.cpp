@@ -169,7 +169,7 @@ int UThreadEpollScheduler::GetCurrUThread() {
 
 UThreadSocket_t * UThreadEpollScheduler::CreateSocket(int fd, int socket_timeout_ms, 
         int connect_timeout_ms, bool no_delay) {
-    UThreadSocket_t * socket = (UThreadSocket_t*) calloc(1, sizeof(UThreadSocket_t));
+    UThreadSocket_t * socket = (UThreadSocket_t*) calloc(1, sizeof(UThreadSocket_t));  //calloc会初始化为0
 
     BaseTcpUtils::SetNonBlock(fd, true);
     if (no_delay) {

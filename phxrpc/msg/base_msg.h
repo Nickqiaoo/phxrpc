@@ -31,7 +31,7 @@ See the AUTHORS file for names of contributors.
 
 namespace google {
 
-namespace protobuf {
+namespace protobuf { 
 
 class Message;
 
@@ -45,7 +45,7 @@ namespace phxrpc {
 
 class BaseMessage {
   public:
-    enum class Direction {
+    enum class Direction {  //枚举类控制枚举名字作用域在当前类中
         NONE = 0,
         REQUEST,
         RESPONSE,
