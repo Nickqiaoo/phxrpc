@@ -78,7 +78,7 @@ int BaseTcpStreamBuf::sync() { //将写缓冲区中已写的字符发送
     }
 
     setp(pbase(), pbase() + buf_size_);
-    pbump(0);  //？
+    pbump(0);  
 
     return 0;
 }

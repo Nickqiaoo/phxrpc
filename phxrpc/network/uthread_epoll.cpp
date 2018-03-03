@@ -367,7 +367,7 @@ int UThreadPoll(UThreadSocket_t * list[], int count, int timeout_ms) {
 
     UThreadSocket_t * socket = list[0];
 
-    int epollfd = epoll_create(count);
+    int epollfd = epoll_create(count); //内部epoll
 
     for (int i = 0; i < count; i++) {
         epoll_ctl(epollfd, EPOLL_CTL_ADD, list[i]->socket, &(list[i]->event));

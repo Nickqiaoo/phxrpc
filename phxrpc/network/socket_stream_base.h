@@ -36,7 +36,7 @@ public:
     BaseTcpStreamBuf(size_t buf_size);
     virtual ~BaseTcpStreamBuf();
 
-    int underflow();  //从缓冲区读
+    int underflow();  //从socket读到缓冲区
     int overflow(int c = traits_type::eof());
     int sync();  //将写缓冲区中已写的字符发送
 
