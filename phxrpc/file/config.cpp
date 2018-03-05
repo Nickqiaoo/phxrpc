@@ -91,7 +91,7 @@ bool Config::ReadItem(const char * section, const char * key, char * value, size
     const char * end_pos = NULL;
     const char * pos = strstr(content_.c_str(), tmp_section);  //字符串tmp_section在content_中的首次出现
     if (NULL != pos) {
-        pos = strchr(pos + 1, '\n');  //字符\n在pos+1之后的位置
+        pos = strchr(pos + 1, '\n');  //找到字符\n在pos+1之后的位置
         if (NULL == pos)
             pos = strchr(content_.c_str(), '\0');
 
@@ -136,7 +136,7 @@ bool Config::ReadItem(const char * section, const char * key, char * value, size
     }
 
     return ret;
-}
+} 
 
 int Config::TrimCStr( char * src_str )
 {
@@ -150,7 +150,7 @@ int Config::TrimCStr( char * src_str )
     for ( pos = src_str; isspace(*pos); pos ++ )
         len--;
     if ( pos != src_str )
-        memmove ( src_str, pos, len + 1 ) ;
+        memmove ( src_str, pos, len + 1 ) ;//复制地址重叠字符串
     return 0;
 }
 
