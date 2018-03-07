@@ -32,20 +32,20 @@ namespace phxrpc {
 
 UThreadStackMemory :: UThreadStackMemory(const size_t stack_size, const bool need_protect) :
     raw_stack_(nullptr), stack_(nullptr), need_protect_(need_protect) {
-    int page_size = getpagesize();
-    if ((stack_size % page_size) != 0) {
+    int page_size = getpagesize();  //获得内存分页大小
+    if ((stack_size % page_size) != 0) {  //使栈大小是页大小的整数倍
         stack_size_ = (stack_size / page_size + 1) * page_size;
     } else {
         stack_size_ = stack_size;
     }
 
-    if (need_protect) {
-        raw_stack_ = mmap(NULL, stack_size_ + page_size * 2, 
+    if (need_protect) {  //如果打开了保护模式
+        raw_stack_ = mmap(NULL, stack_size_ + page_size * 2,  //多分配两页
                 PROT_READ | PROT_WRITE, MAP_ANONYMOUS | MAP_PRIVATE, -1, 0);
         assert(raw_stack_ != nullptr);
-        assert(mprotect(raw_stack_, page_size, PROT_NONE) == 0);
+        assert(mprotect(raw_stack_, page_size, PROT_NONE) == 0);  //使这两页无法访问
         assert(mprotect((void *)((char *)raw_stack_ + stack_size_ + page_size), page_size, PROT_NONE) == 0);
-        stack_ = (void *)((char *)raw_stack_ + page_size);
+        stack_ = (void *)((char *)raw_stack_ + page_size);  //栈前后空出一页
     } else {
         raw_stack_ = mmap(NULL, stack_size_, PROT_READ | PROT_WRITE, MAP_ANONYMOUS | MAP_PRIVATE, -1, 0);
         assert(raw_stack_ != nullptr);

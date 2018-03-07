@@ -37,15 +37,16 @@ namespace {
 
 
 using namespace std;
+ 
 
-
-char *SeparateStr(char **s, const char *del) {
+//返回s中del之前的字符，并将s重新指向del之后
+char *SeparateStr(char **s, const char *del) {  //因为要改变指针本身，所以要用二级指针
     char *d, *tok;
 
     if (!s || !*s)
         return nullptr;
     tok = *s;
-    d = strstr(tok, del);
+    d = strstr(tok, del);  //返回tok中第一次出现del的位置
 
     if (d) {
         *s = d + strlen(del);
@@ -65,7 +66,7 @@ void URLEncode(const char *source, char *dest, size_t length) {
     size_t n = 0;
 
     for (; *p && n < length; p++, q++, n++) {
-        if (isalnum((int) *p)) {
+        if (isalnum((int) *p)) {  //判断是否为英文字母或数字
             *q = *p;
         } else if (*p == ' ') {
             *q = '+';
@@ -76,9 +77,9 @@ void URLEncode(const char *source, char *dest, size_t length) {
             }
 
             *q++ = '%';
-            int digit = *p >> 4;
-            *q++ = urlencstring[digit];
-            digit = *p & 0xf;
+            int digit = *p >> 4;  //取高四位
+            *q++ = urlencstring[digit];  //转换为16进制 
+            digit = *p & 0xf;  //取低四位
             *q = urlencstring[digit];
             n += 2;
         }
@@ -96,7 +97,7 @@ namespace phxrpc {
 
 using namespace std;
 
-
+//填充响应头
 void HttpProtocol::FixRespHeaders(bool is_keep_alive, const char *version, HttpResponse *resp) {
     char buffer[256]{0};
 
@@ -127,6 +128,8 @@ void HttpProtocol::FixRespHeaders(const HttpRequest &req, HttpResponse *resp) {
     FixRespHeaders(req.IsKeepAlive(), req.GetVersion(), resp);
 }
 
+
+//发送请求
 ReturnCode HttpProtocol::SendReqHeader(BaseTcpStream &socket, const char *method, const HttpRequest &req) {
     string url;
 
@@ -176,6 +179,7 @@ ReturnCode HttpProtocol::SendReqHeader(BaseTcpStream &socket, const char *method
     return ReturnCode::OK;
 }
 
+//解析应答首行
 ReturnCode HttpProtocol::RecvRespStartLine(BaseTcpStream &socket, HttpResponse *resp) {
     char line[1024]{0};
 
@@ -254,7 +258,7 @@ ReturnCode HttpProtocol::RecvHeaders(BaseTcpStream &socket, HttpMessage *msg) {
             if (multi_line.size() > 0) {
                 char * header = (char*) multi_line.c_str();
                 pos = header;
-                SeparateStr(&pos, ":");
+                SeparateStr(&pos, ":"); //这里从:切断，header就是name，pos是value
                 for (; nullptr != pos && '\0' != *pos && isspace(*pos);)
                     pos++;
                 msg->AddHeader(header, nullptr == pos ? "" : pos);
@@ -262,10 +266,10 @@ ReturnCode HttpProtocol::RecvHeaders(BaseTcpStream &socket, HttpMessage *msg) {
             multi_line.clear();
         }
 
-        for (pos = line; '\0' != *pos && isspace(*pos);)
+        for (pos = line; '\0' != *pos && isspace(*pos);)  //排除前面的空格
             pos++;
         if ('\0' != *pos)
-            multi_line.append(pos);
+            multi_line.append(pos);  //保存一行
     } while (is_good && '\0' != *line);
 
     free(line);
@@ -286,7 +290,7 @@ ReturnCode HttpProtocol::RecvBody(BaseTcpStream &socket, HttpMessage *msg) {
     char *buff{(char *)malloc(MAX_RECV_LEN)};
     assert(nullptr != buff);
 
-    if (nullptr != encoding && 0 == strcasecmp(encoding, "chunked")) {
+    if (nullptr != encoding && 0 == strcasecmp(encoding, "chunked")) {  //是否是分块传输
         // read chunked, refer to rfc2616 section[19.4.6]
 
         for (; is_good;) {

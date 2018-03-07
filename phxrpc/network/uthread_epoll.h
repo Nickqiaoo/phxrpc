@@ -162,7 +162,7 @@ int UThreadSocketFd(UThreadSocket_t & socket);
 
 size_t UThreadSocketTimerID(UThreadSocket_t & socket);
 
-void UThreadSocketSetTimerID(UThreadSocket_t & socket, size_t timer_id);
+void UThreadSocketSetTimerID(UThreadSocket_t & socket, size_t timer_id);  //设置对应的timer下标 是真正的下标+1
 
 UThreadSocket_t * NewUThreadSocket();
 

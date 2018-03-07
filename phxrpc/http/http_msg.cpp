@@ -122,7 +122,7 @@ const char *HttpMessage::GetHeaderValue(const char *name) const {
     const char *value{nullptr};
 
     for (size_t i{0}; i < header_name_list_.size() && nullptr == value; i++) {
-        if (0 == strcasecmp(name, header_name_list_[i].c_str())) {
+        if (0 == strcasecmp(name, header_name_list_[i].c_str())) {  //判断字符串是否相等(忽略大小写)
             value = header_value_list_[i].c_str();
         }
     }
@@ -240,13 +240,18 @@ void HttpResponse::DispatchErr() {
     SetReasonPhrase("Not Found");
 }
 
+
+//发送响应
 ReturnCode HttpResponse::Send(BaseTcpStream &socket) const {
+    //写请求行
     socket << GetVersion() << " " << GetStatusCode() << " " << GetReasonPhrase() << "\r\n";
 
+    //写请求头
     for (size_t i{0}; GetHeaderCount() > i; ++i) {
         socket << GetHeaderName(i) << ": " << GetHeaderValue(i) << "\r\n";
     }
 
+    //设置Content-Length
     if (GetContent().size() > 0) {
         if (nullptr == GetHeaderValue(HttpMessage::HEADER_CONTENT_LENGTH)) {
             socket << HttpMessage::HEADER_CONTENT_LENGTH << ": " << GetContent().size() << "\r\n";
@@ -255,6 +260,7 @@ ReturnCode HttpResponse::Send(BaseTcpStream &socket) const {
 
     socket << "\r\n";
 
+    //写消息
     if (GetContent().size() > 0)
         socket << GetContent();
 

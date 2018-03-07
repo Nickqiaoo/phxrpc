@@ -69,8 +69,8 @@ Timer::Timer() {
 Timer::~Timer() {
 }
 
-void Timer :: heap_up(const size_t end_idx) {
-    size_t now_idx = end_idx - 1;
+void Timer :: heap_up(const size_t end_idx) {  //参数是真正的下标+1
+    size_t now_idx = end_idx - 1;  //刚push进来是在最后的
     TimerObj obj = timer_heap_[now_idx];
     size_t parent_idx = (now_idx - 1) / 2;
     while (now_idx > 0 && parent_idx >= 0 && obj < timer_heap_[parent_idx]) {
@@ -125,15 +125,15 @@ void Timer :: RemoveTimer(const size_t timer_id) {
     }
 
     TimerObj obj = timer_heap_[now_idx];
-    UThreadSocketSetTimerID(*obj.socket_, 0);
-    std::swap(timer_heap_[timer_heap_.size() - 1], timer_heap_[now_idx]);
-    timer_heap_.pop_back();
+    UThreadSocketSetTimerID(*obj.socket_, 0);  //对应的timerid设为0
+    std::swap(timer_heap_[timer_heap_.size() - 1], timer_heap_[now_idx]);  //交换到最后
+    timer_heap_.pop_back();  //pop出去
 
     if (timer_heap_.empty()) {
         return;
     }
 
-    if (timer_heap_[now_idx] < obj) {
+    if (timer_heap_[now_idx] < obj) {  //交换上来的比原来的小
         heap_up(now_idx + 1);
     } else if (timer_heap_[now_idx] == obj) {
         UThreadSocketSetTimerID(*timer_heap_[now_idx].socket_, now_idx + 1);
