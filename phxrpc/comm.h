@@ -21,28 +21,4 @@ See the AUTHORS file for names of contributors.
 
 #pragma once
 
-#include <memory>
-#include <sys/mman.h>
-
-
-namespace phxrpc {
-
-
-class UThreadStackMemory {
-  public:
-    UThreadStackMemory(const size_t stack_size, const bool need_protect = true);
-    ~UThreadStackMemory();
-
-    void * top();
-    size_t size();
-
-  private:
-    void * raw_stack_;
-    void * stack_;
-    size_t stack_size_;
-    int need_protect_;
-};
-
-
-}  // namespace phxrpc
-
+#include "comm/assert.h"

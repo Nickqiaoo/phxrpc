@@ -24,7 +24,6 @@ See the AUTHORS file for names of contributors.
 #include <vector>
 #include <string>
 
-#include "phxrpc/msg/common.h"
 #include "phxrpc/network.h"
 
 #include "client_config.h"
@@ -35,7 +34,7 @@ namespace google {
 namespace protobuf {
 
 
-class MessageLite;
+class Message;
 
 
 }
@@ -46,35 +45,30 @@ class MessageLite;
 namespace phxrpc {
 
 
-class UThreadEpollScheduler;
-class UThreadCaller;
+class BaseMessageHandlerFactory;
 class ClientMonitor;
-
-class MqttConnect;
-class MqttConnack;
-class MqttPublish;
-class MqttPuback;
-class MqttDisconnect;
+class UThreadCaller;
+class UThreadEpollScheduler;
 
 typedef void (*UThreadCallback)(UThreadCaller *caller, void *args);
 
 class UThreadCaller {
   public:
     UThreadCaller(UThreadEpollScheduler *uthread_scheduler,
-                  google::protobuf::MessageLite &request,
-                  google::protobuf::MessageLite *response,
+                  google::protobuf::Message &request,
+                  google::protobuf::Message *response,
                   ClientMonitor &client_monitor,
-                  const Protocol protocol, const std::string &uri,
-                  const int cmd_id, const Endpoint_t &ep,
+                  BaseMessageHandlerFactory &msg_handler_factory,
+                  const std::string &uri, const int cmd_id, const Endpoint_t &ep,
                   const int connect_timeout_ms, const int socket_timeout_ms,
                   UThreadCallback callback, void *args);
     virtual ~UThreadCaller();
 
     void Close();
 
-    virtual google::protobuf::MessageLite &GetRequest();
-    virtual google::protobuf::MessageLite *GetResponse();
-    const std::string &GetURI();
+    virtual google::protobuf::Message &GetRequest();
+    virtual google::protobuf::Message *GetResponse();
+    const std::string &uri();
     int GetCmdID();
     UThreadEpollScheduler *Getuthread_scheduler();
     Endpoint_t *GetEP();
@@ -91,10 +85,10 @@ class UThreadCaller {
 
   private:
     UThreadEpollScheduler *uthread_scheduler_;
-    google::protobuf::MessageLite *request_;
-    google::protobuf::MessageLite *response_;
+    google::protobuf::Message *request_;
+    google::protobuf::Message *response_;
     ClientMonitor &client_monitor_;
-    Protocol protocol_;
+    BaseMessageHandlerFactory &msg_handler_factory_;
     std::string uri_;
     int cmd_id_;
     Endpoint_t ep_;
@@ -108,13 +102,13 @@ class UThreadCaller {
 
 class UThreadMultiCaller {
   public:
-    UThreadMultiCaller(ClientMonitor &client_monitor);
+    UThreadMultiCaller(ClientMonitor &client_monitor,
+                       BaseMessageHandlerFactory &msg_handler_factory);
     virtual ~UThreadMultiCaller();
 
-    void AddCaller(google::protobuf::MessageLite &request,
-                   google::protobuf::MessageLite *response,
-                   const Protocol protocol, const std::string &uri,
-                   const int cmd_id, const Endpoint_t &ep,
+    void AddCaller(google::protobuf::Message &request,
+                   google::protobuf::Message *response,
+                   const std::string &uri, const int cmd_id, const Endpoint_t &ep,
                    const int connect_timeout_ms, const int socket_timeout_ms,
                    UThreadCallback callback = nullptr, void *args = nullptr);
 
@@ -125,7 +119,8 @@ class UThreadMultiCaller {
   private:
     UThreadEpollScheduler uthread_scheduler_;
     std::vector<UThreadCaller *> uthread_caller_list_;
-    ClientMonitor & client_monitor_;
+    ClientMonitor &client_monitor_;
+    BaseMessageHandlerFactory &msg_handler_factory_;
 };
 
 

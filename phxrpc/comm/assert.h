@@ -21,28 +21,20 @@ See the AUTHORS file for names of contributors.
 
 #pragma once
 
-#include <memory>
-#include <sys/mman.h>
-
-
 namespace phxrpc {
 
+void __bad_assertion(const char *mess);
 
-class UThreadStackMemory {
-  public:
-    UThreadStackMemory(const size_t stack_size, const bool need_protect = true);
-    ~UThreadStackMemory();
+}
 
-    void * top();
-    size_t size();
+#undef __PHXRPC_STR
+#undef __PHXRPC_XSTR
+#undef PHXRPC_ASSERT
 
-  private:
-    void * raw_stack_;
-    void * stack_;
-    size_t stack_size_;
-    int need_protect_;
-};
-
-
-}  // namespace phxrpc
-
+#define __PHXRPC_STR(x) # x
+#define __PHXRPC_XSTR(x) __PHXRPC_STR(x)
+#define PHXRPC_ASSERT(expr)                                             \
+    ((expr) ? (void)0 :                                                 \
+     phxrpc::__bad_assertion("Assertion \"" #expr                       \
+                             "\" failed, file " __PHXRPC_XSTR(__FILE__) \
+                             ", line " __PHXRPC_XSTR(__LINE__) "\n"))

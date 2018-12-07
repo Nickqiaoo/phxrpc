@@ -12,18 +12,17 @@ PhxRPC[![Build Status](https://travis-ci.org/Tencent/phxrpc.png)](https://travis
 
 ## 总览
 
-  - 使用Protobuf作为IDL用于描述RPC接口以及通信数据结构。
-  - 基于Protobuf文件自动生成Client以及Server接口，用于Client的构建，以及Server的实现。
-  - 半同步半异步模式，采用独立多IO线程，通过Epoll管理请求的接入以及读写，工作线程采用固定线程池。IO线程与工作线程通过内存队列进行交互。
-  - 支持协程Worker，可配置多个线程，每个线程多个协程。
-  - 提供完善的过载保护，无需配置阈值，支持动态自适应拒绝请求。
-  - New: 支持HTTP和MQTT协议。
-  - 提供简易的Client/Server配置读入方式。
-  - 基于lambda函数实现并发访问Server，可以非常方便地实现Google提出的 [Backup Requests](http://static.googleusercontent.com/media/research.google.com/zh-CN//people/jeff/Berkeley-Latency-Mar2012.pdf) 模式。
+- 使用Protobuf作为IDL用于描述RPC接口以及通信数据结构。
+- 基于Protobuf文件自动生成Client以及Server接口，用于Client的构建，以及Server的实现。
+- 半同步半异步模式，采用独立多IO线程，通过Epoll管理请求的接入以及读写，工作线程采用固定线程池。IO线程与工作线程通过内存队列进行交互。
+- 支持协程Worker，可配置多个线程，每个线程多个协程。
+- 提供完善的过载保护，无需配置阈值，支持动态自适应拒绝请求。
+- 提供简易的Client/Server配置读入方式。
+- 基于lambda函数实现并发访问Server，可以非常方便地实现Google提出的 [Backup Requests](http://static.googleusercontent.com/media/research.google.com/zh-CN//people/jeff/Berkeley-Latency-Mar2012.pdf) 模式。
 
 ## 局限
 
-  - 不支持多进程模式。
+- 不支持多进程模式。
 
 ## 性能
 
@@ -31,13 +30,13 @@ PhxRPC[![Build Status](https://travis-ci.org/Tencent/phxrpc.png)](https://travis
 
 ### 运行环境
 
-    CPU：24 x Intel(R) Xeon(R) CPU E5-2620 v3 @ 2.40GHz
-    内存：32 GB
-    网卡：千兆网卡
-    Client/Server机器之间PING值： 0.05ms
-    请求写入并发：1000个线程
-    业务数据大小：除去HTTP协议部分20b
-    Worker线程数：20
+CPU：24 x Intel(R) Xeon(R) CPU E5-2620 v3 @ 2.40GHz
+内存：32 GB
+网卡：千兆网卡
+Client/Server机器之间PING值： 0.05ms
+请求写入并发：1000个线程
+业务数据大小：除去HTTP协议部分20b
+Worker线程数：20
 
 ### 性能测试结果(qps)
 
@@ -59,7 +58,7 @@ PhxRPC[![Build Status](https://travis-ci.org/Tencent/phxrpc.png)](https://travis
 
 ### Protobuf准备
 
-PhxRPC必须依赖的第三方库只有Protobuf。在编译前，在third_party目录放置好protobuf目录，或者通过软链的形式。
+PhxRPC必须依赖的第三方库只有Protobuf。在编译前，在`third_party`目录放置好`protobuf`目录，或者通过软链的形式。
 
 ### boost优化
 
@@ -67,16 +66,18 @@ PhxRPC在ServerIO以及Client并发连接管理上使用了ucontext，而boost�
 
 ### 编译环境
 
-  - Linux.
-  - GCC-4.8及以上版本。
-  - boost 1.56及以上版本.（可选）
+- Linux
+- GCC-4.8及以上版本
+- boost 1.56及以上版本（可选）
 
 ### 编译安装方法
 
 进入PhxRPC根目录。
 
-    make (默认是-O2编译，如需编译debug版，执行 make debug=y)
-    make boost (可选，编译PhxRPC的boost优化插件，编译之前先准备好boost库)
+```sh
+make (默认是-O2编译，如需编译debug版，执行 make debug=y)
+make boost (可选，编译PhxRPC的boost优化插件，编译之前先准备好boost库)
+```
 
 ## 如何使用
 
@@ -136,6 +137,7 @@ service Search {
 # sample
 ../codegen/phxrpc_pb2server -I ../ -I ../third_party/protobuf/include -f search.proto -d .
 ../codegen/phxrpc_pb2server -I ../ -I ../third_party/protobuf/include -f search.proto -d . -u
+```
 
 两种生成模式，区别在于`-u`参数。
 
@@ -143,28 +145,25 @@ service Search {
 
 第二种`-u`参数指定生成uthread worker模型，也就是工作线程池里面每个线程里面运行着多个协程。
 
-调用完工具后，在生成代码放置目录下执行make，即可生成全部的RPC相关代码。
+调用完工具后，在生成代码放置目录下执行`make`，即可生成全部的RPC相关代码。
 
-`-p mqtt`可生成支持MQTT协议的代码。
-```
+### 选择是否启用Boost优化
 
-### 选择是否启用boost优化
-
-打开生成代码放置目录下的Makefile文件。
+打开生成代码放置目录下的`Makefile`文件。
 
 ```bash
 # choose to use boost for network
 #LDFLAGS := $(PLUGIN_BOOST_LDFLAGS) $(LDFLAGS)
 ```
 
-可以看到以上两行，取消注释掉第二行，重新make clean, make即可开启boost对PhxRPC的优化。开启前记得编译好PhxRPC的boost插件。
+可以看到以上两行，取消注释掉第二行，重新`make clean && make`即可开启Boost对PhxRPC的优化。开启前记得编译好PhxRPC的Boost插件。
 
 ### 补充自己的代码
 
 #### Server(xxx_service_impl.cpp)
 
 ```c++
-int SearchServiceImpl::PhxEcho(const google::protobuf::StringValue &req,
+int SearchServiceImpl::PHXEcho(const google::protobuf::StringValue &req,
         google::protobuf::StringValue *resp) {
     resp->set_value(req.value());
     return 0;
@@ -183,14 +182,12 @@ int SearchServiceImpl::Notify(const google::protobuf::StringValue &req,
 }
 ```
 
-如果要使用MQTT协议，可对应补充`PhxMqttXxx`实现。
-
 #### Client (xxx_client.cpp)
 
 ```c++
 // 这个是默认生成的代码，可自行修改，或利用我们提供的stub API自定义封装Client
 
-int SearchClient::PhxEcho(const google::protobuf::StringValue &req,
+int SearchClient::PHXEcho(const google::protobuf::StringValue &req,
         google::protobuf::StringValue *resp) {
     const phxrpc::Endpoint_t *ep = global_searchclient_config_.GetRandom();
 
@@ -203,15 +200,13 @@ int SearchClient::PhxEcho(const google::protobuf::StringValue &req,
             socket.SetTimeout(global_searchclient_config_.GetSocketTimeoutMS());
 
             SearchStub stub(socket, *(global_searchclient_monitor_.get()));
-            return stub.PhxEcho(req, resp);
+            return stub.PHXEcho(req, resp);
         }
     }
 
     return -1;
 }
 ```
-
-如果要使用MQTT协议，可对应补充`PhxMqttXxx`实现。
 
 #### UThread Client (xxx_client_uthread.cpp)
 
@@ -221,7 +216,7 @@ int SearchClient::PhxEcho(const google::protobuf::StringValue &req,
 // UThread Client构造函数需要传入UThreadEpollScheduler*类型参数，
 // 这个参数来源可以在xxx_service_impl.h的私有变量中获得。
 
-int SearchClientUThread::PhxEcho(const google::protobuf::StringValue &req,
+int SearchClientUThread::PHXEcho(const google::protobuf::StringValue &req,
         google::protobuf::StringValue *resp) {
     const phxrpc::Endpoint_t *ep = global_searchclientuthread_config_.GetRandom();
 
@@ -234,7 +229,7 @@ int SearchClientUThread::PhxEcho(const google::protobuf::StringValue &req,
             socket.SetTimeout(global_searchclientuthread_config_.GetSocketTimeoutMS());
 
             SearchStub stub(socket, *(global_searchclientuthread_monitor_.get()));
-            return stub.PhxEcho(req, resp);
+            return stub.PHXEcho(req, resp);
         }
     }
 
@@ -242,12 +237,10 @@ int SearchClientUThread::PhxEcho(const google::protobuf::StringValue &req,
 }
 ```
 
-如果要使用MQTT协议，可对应补充`PhxMqttXxx`实现。
-
 #### Client并发调用样例
 
 ```c++
-int SearchClient::PhxBatchEcho(const google::protobuf::StringValue &req,
+int SearchClient::PHXBatchEcho(const google::protobuf::StringValue &req,
         google::protobuf::StringValue *resp) {
     int ret = -1;
     size_t echo_server_count = 2;
@@ -262,7 +255,7 @@ int SearchClient::PhxBatchEcho(const google::protobuf::StringValue &req,
                             *(global_searchclient_monitor_.get()))) {
                     socket.SetTimeout(global_searchclient_config_.GetSocketTimeoutMS());
                     SearchStub stub(socket, *(global_searchclient_monitor_.get()));
-                    int this_ret = stub.PhxEcho(req, resp);
+                    int this_ret = stub.PHXEcho(req, resp);
                     if (this_ret == 0) {
                         ret = this_ret;
                         uthread_s.Close();
@@ -276,7 +269,7 @@ int SearchClient::PhxBatchEcho(const google::protobuf::StringValue &req,
 }
 ```
 
-`uthread_begin`, `uthread_end`, `uthread_s`, `uthread_t`这几个关键字是PhxRPC自定义的宏，分别表示协程的准备，结束，协程调度器以及协程的创建。
+`uthread_begin`, `uthread_end`, `uthread_s`, `uthread_t`这几个关键字是PhxRPC自定义的宏，分别表示协程的准备、结束，协程调度器以及协程的创建。
 
 上面的代码实现了Google提出的 [Backup Requests](http://static.googleusercontent.com/media/research.google.com/zh-CN//people/jeff/Berkeley-Latency-Mar2012.pdf) 模式。实现的功能是分别对两个Server同时发起Echo调用，当有一个Server响应的时候，则整个函数结束。在这段代码里面，我们提供了一种异步IO的同步写法，并给予了一些方便使用的宏定义。首先使用`uthread_begin`进行准备，然后使用`uthread_t`以lambda的形式创建一个协程，而在任意一个协程里面都可使用我们PhxRPC生成的Client API进行RPC调用，并可使用`uthread_s`随时结束所有RPC调用。最后的`uthread_end`真正通过协程调度发起这些lambda内的RPC调用，并等待结束。
 
@@ -284,7 +277,7 @@ int SearchClient::PhxBatchEcho(const google::protobuf::StringValue &req,
 
 #### Server配置说明 (xxx_server.conf)
 
-```c++
+```ini
 [Server]
 BindIP = 127.0.0.1              // Server IP
 Port = 16161                    // Server Port

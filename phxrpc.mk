@@ -36,7 +36,7 @@ RM = /bin/rm -f
 
 CFLAGS = -std=c++11 -Wall -D_REENTRANT -D_GNU_SOURCE -D_XOPEN_SOURCE -fPIC -m64 $(OPT) \
 		-I$(PROTOBUF_ROOT)/include \
-		-I$(PHXRPC_ROOT) \
+		-I$(PHXRPC_ROOT)
 
 LDFLAGS = -L$(PROTOBUF_ROOT)/lib/ $(PROTOBUF_ROOT)/lib/libprotobuf.a \
 		-lstdc++ -lpthread -lm

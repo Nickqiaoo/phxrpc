@@ -25,16 +25,17 @@ See the AUTHORS file for names of contributors.
 #include <cstdlib>
 #include <cstring>
 #include <memory>
-#include <iconv.h>
 
-#include "http_msg.h"
-#include "http_client.h"
-
+#include "phxrpc/comm.h"
 #include "phxrpc/file/file_utils.h"
 #include "phxrpc/file/opt_map.h"
+#include "phxrpc/http/http_client.h"
+#include "phxrpc/http/http_msg.h"
 #include "phxrpc/network/socket_stream_block.h"
 
+
 using namespace phxrpc;
+
 
 void ShowUsage(const char *program) {
     printf("\n%s [-h host] [-p port] [-r POST|GET] [-u URI] [-f file] [-v]\n", program);
@@ -50,25 +51,9 @@ void ShowUsage(const char *program) {
     exit(0);
 }
 
-int code_convert(const char *from_charset, const char *to_charset, char *inbuf,
-		size_t inlen, char *outbuf, size_t outlen)
-{
-	iconv_t cd;
-	char **pin = &inbuf;
-	char **pout = &outbuf;
- 
-	cd = iconv_open(to_charset, from_charset);
-	if (cd == 0)
-		return -1;
-	memset(outbuf, 0, outlen);
-	if (iconv(cd, pin, &inlen, pout, &outlen) != 0)
-		return -1;
-	iconv_close(cd);
-	return 0;
-}
+int main(int argc, char **argv) {
 
-int main(int argc, char *argv[]) {
-    assert(sigset(SIGPIPE, SIG_IGN) != SIG_ERR);
+    PHXRPC_ASSERT(signal(SIGPIPE, SIG_IGN) != SIG_ERR);
 
     OptMap optMap("h:p:r:u:f:ov");
 
@@ -97,12 +82,11 @@ int main(int argc, char *argv[]) {
     }
 
     HttpRequest request;
-    request.SetURI(uri);
-    request.SetMethod(method);
-    request.SetVersion("HTTP/1.1");
+    request.set_uri(uri);
+    request.set_version("HTTP/1.1");
+    request.set_method(method);
     request.AddHeader("Connection", "Keep-Alive");
     request.AddHeader("Host", "127.0.0.1");
-    request.AddHeader("Cookie","ASP.NET_SessionId=uwn0ws2lzq0m5zjb145htf45");
 
     if (0 == strcasecmp(method, "POST")) {
         if (!FileUtils::ReadFile(file, &(request.GetContent()))) {
@@ -128,7 +112,7 @@ int main(int argc, char *argv[]) {
     } else if (request.IsMethod("HEAD")) {
         ret = HttpClient::Head(socket, request, &response);
     } else {
-        printf("unsupport method %s\n", request.GetMethod());
+        printf("unsupport method %s\n", request.method());
     }
 
     if (0 == ret) {
@@ -145,10 +129,7 @@ int main(int argc, char *argv[]) {
 
         printf("%zu bytes body\n", response.GetContent().size());
         if (response.GetContent().size() > 0) {
-            int inlen=response.GetContent().size(),outlen=10000;
-            char buf[10000];
-            code_convert("gb2312","utf-8",const_cast<char*>(response.GetContent().data()), inlen, buf, outlen);
-            printf("%s\n%d\n", buf,strlen(buf));
+            //printf("%s\n", (char*)response.getContent());
         }
     } else {
         printf("http request fail\n");

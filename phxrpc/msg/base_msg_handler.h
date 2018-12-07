@@ -21,40 +21,28 @@ See the AUTHORS file for names of contributors.
 
 #pragma once
 
+#include "phxrpc/msg/base_msg.h"
+#include "phxrpc/network.h"
+
 
 namespace phxrpc {
 
 
-class BaseRequest;
-class BaseProtocol;
-
-
-class BaseProtocolFactory {
+class BaseMessageHandler {
   public:
-    BaseProtocolFactory() = default;
-    virtual ~BaseProtocolFactory() = default;
+    BaseMessageHandler() = default;
+    virtual ~BaseMessageHandler() = default;
 
-    static BaseProtocolFactory *CreateFactory(UThreadTcpStream &in_stream);
+    virtual int RecvRequest(BaseTcpStream &socket, BaseRequest *&req) = 0;
+    virtual int RecvResponse(BaseTcpStream &socket, BaseResponse *&resp) = 0;
 
-    virtual BaseProtocol *GenProtocol() = 0;
-};
+    virtual int GenRequest(BaseRequest *&req) = 0;
+    virtual int GenResponse(BaseResponse *&resp) = 0;
 
+    virtual bool keep_alive() const = 0;
 
-class HttpProtocolFactory : public BaseProtocolFactory {
-  public:
-    HttpProtocolFactory() = default;
-    virtual ~HttpProtocolFactory() = default;
-
-    virtual BaseProtocol *GenProtocol() override;
-};
-
-
-class MqttProtocolFactory : public BaseProtocolFactory {
-  public:
-    MqttProtocolFactory() = default;
-    virtual ~MqttProtocolFactory() = default;
-
-    virtual BaseProtocol *GenProtocol() override;
+  protected:
+    BaseRequest *req_{nullptr};
 };
 
 

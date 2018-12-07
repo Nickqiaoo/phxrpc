@@ -19,14 +19,13 @@ permissions and limitations under the License.
 See the AUTHORS file for names of contributors.
 */
 
-#include <errno.h>
-#include <unistd.h>
-
 #include <cassert>
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
+#include <errno.h>
 #include <string>
+#include <unistd.h>
 
 #include "syntax_tree.h"
 
@@ -43,11 +42,10 @@ void PrintHelp(const char *program) {
     printf("\n");
     printf("PhxRPC ProtoBuf tool\n");
     printf("\n");
-    printf("%s <-f profo file> <-d destination file dir> [-p] [-v]\n", program);
+    printf("%s <-f profo file> <-d destination file dir> [-v]\n", program);
     printf(" Usage: -f <proto file>             # proto file\n");
     printf("        -d <dir>                    # destination file dir\n");
     printf("        -I <dir>                    # include path dir\n");
-    printf("        -p <protocol>               # http or mqtt\n");
     printf("        -v                          # print this screen\n");
     printf("\n");
 
@@ -55,47 +53,15 @@ void PrintHelp(const char *program) {
 }
 
 void Proto2Tool(const char *program, const char *pb_file, const char *dir_path,
-                const vector<string> &include_list, const bool mqtt) {
+                const vector<string> &include_list) {
     SyntaxTree syntax_tree;
-
-    int ret = ProtoUtils::Parse(pb_file, &syntax_tree, include_list);
-
+    int ret{ProtoUtils::Parse(pb_file, &syntax_tree, include_list)};
     if (0 != ret) {
         printf("parse proto file fail, please check error log\n");
         return;
     }
 
-    // printf( "parse(%s) = %d\n", pb_file, ret );
-
-    // mqtt
-    SyntaxFuncVector mqtt_funcs;
-
-    if (mqtt) {
-        SyntaxFunc connect_func;
-        connect_func.SetCmdID(-201);
-        connect_func.SetName("PhxMqttConnect");
-        connect_func.GetReq()->SetType("phxrpc::MqttConnectPb");
-        connect_func.GetResp()->SetType("phxrpc::MqttConnackPb");
-        mqtt_funcs.push_back(connect_func);
-
-        SyntaxFunc publish_func;
-        publish_func.SetCmdID(-202);
-        publish_func.SetName("PhxMqttPublish");
-        publish_func.SetOptString("s:");
-        publish_func.SetUsage("-s <string>");
-        publish_func.GetReq()->SetType("phxrpc::MqttPublishPb");
-        publish_func.GetResp()->SetType("phxrpc::MqttPubackPb");
-        mqtt_funcs.push_back(publish_func);
-
-        SyntaxFunc disconnect_func;
-        disconnect_func.SetCmdID(-207);
-        disconnect_func.SetName("PhxMqttDisconnect");
-        disconnect_func.GetReq()->SetType("phxrpc::MqttDisconnectPb");
-        disconnect_func.GetResp()->SetType("");
-        mqtt_funcs.push_back(disconnect_func);
-    }
-
-    NameRender name_render(syntax_tree.GetPrefix());
+    NameRender name_render(syntax_tree.prefix());
     ToolCodeRender code_render(name_render);
 
     char filename[256]{0}, tmp[256]{0};
@@ -106,7 +72,7 @@ void Proto2Tool(const char *program, const char *pb_file, const char *dir_path,
         snprintf(filename, sizeof(filename), "%s/%s.h", dir_path, tmp);
         FILE *fp{fopen(filename, "w")};
         assert(nullptr != fp);
-        code_render.GenerateToolHpp(&syntax_tree, mqtt_funcs, fp);
+        code_render.GenerateToolHpp(&syntax_tree, fp);
         fclose(fp);
 
         printf("\n%s: Build %s file ... done\n", program, filename);
@@ -119,7 +85,7 @@ void Proto2Tool(const char *program, const char *pb_file, const char *dir_path,
 
         FILE *fp{fopen(filename, "w")};
         assert(nullptr != fp);
-        code_render.GenerateToolCpp(&syntax_tree, mqtt_funcs, fp);
+        code_render.GenerateToolCpp(&syntax_tree, fp);
         fclose(fp);
 
         printf("\n%s: Build %s file ... done\n", program, filename);
@@ -133,7 +99,7 @@ void Proto2Tool(const char *program, const char *pb_file, const char *dir_path,
         if (0 != access(filename, F_OK)) {
             FILE *fp{fopen(filename, "w")};
             assert(nullptr != fp);
-            code_render.GenerateToolImplHpp(&syntax_tree, mqtt_funcs, fp);
+            code_render.GenerateToolImplHpp(&syntax_tree, fp);
             fclose(fp);
 
             printf("\n%s: Build %s file ... done\n", program, filename);
@@ -150,7 +116,7 @@ void Proto2Tool(const char *program, const char *pb_file, const char *dir_path,
         if (0 != access(filename, F_OK)) {
             FILE *fp{fopen(filename, "w")};
             assert(nullptr != fp);
-            code_render.GenerateToolImplCpp(&syntax_tree, mqtt_funcs, fp);
+            code_render.GenerateToolImplCpp(&syntax_tree, fp);
             fclose(fp);
 
             printf("\n%s: Build %s file ... done\n", program, filename);
@@ -186,9 +152,8 @@ int main(int argc, char **argv) {
     vector<string> include_list;
     char real_path[1024]{0};
     char *rp{nullptr};
-    bool mqtt{false};
 
-    while (EOF != (c = getopt(argc, argv, "f:d:I:p:v"))) {
+    while (EOF != (c = getopt(argc, argv, "f:d:I:v"))) {
         switch (c) {
             case 'f':
                 pb_file = optarg;
@@ -201,10 +166,6 @@ int main(int argc, char **argv) {
                 if (rp != nullptr) {
                     include_list.push_back(rp);
                 }
-                break;
-            case 'p':
-                if (0 == strcasecmp(optarg, "mqtt"))
-                mqtt = true;
                 break;
             default:
                 PrintHelp(argv[0]);
@@ -232,7 +193,7 @@ int main(int argc, char **argv) {
         path[strlen(path) - 1] = '\0';
     }
 
-    Proto2Tool(argv[0], pb_file, path, include_list, mqtt);
+    Proto2Tool(argv[0], pb_file, path, include_list);
 
     printf("\n");
 

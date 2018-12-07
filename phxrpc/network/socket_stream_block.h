@@ -45,7 +45,7 @@ public:
     BlockTcpStream(size_t buf_size = 1024);
     ~BlockTcpStream();
 
-    void Attach(int socket);  //绑定socket和buf
+    void Attach(int socket);
 
     bool SetTimeout(int socket_timeout_ms);
 
@@ -62,7 +62,7 @@ private:
 class BlockTcpUtils {
 public:
     static bool Open(BlockTcpStream * stream, const char * ip, unsigned short port, int connect_timeout_ms,
-                     const char * bind_addr, int bind_port);  //客户端发起连接
+                     const char * bind_addr, int bind_port);
 
     static bool Listen(int * listenfd, const char * ip, unsigned short port);
 

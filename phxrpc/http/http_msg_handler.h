@@ -21,9 +21,36 @@ See the AUTHORS file for names of contributors.
 
 #pragma once
 
-#include "msg/base_dispatcher.h"
-#include "msg/base_msg.h"
-#include "msg/base_msg_handler.h"
-#include "msg/base_msg_handler_factory.h"
-#include "msg/common.h"
+#include "phxrpc/msg/base_msg_handler.h"
+
+
+namespace phxrpc {
+
+
+class BaseTcpStream;
+
+class HttpMessage;
+class HttpRequest;
+class HttpResponse;
+
+class HttpMessageHandler : public BaseMessageHandler {
+  public:
+    HttpMessageHandler() = default;
+    virtual ~HttpMessageHandler() override = default;
+
+    virtual int RecvRequest(BaseTcpStream &socket, BaseRequest *&req) override;
+    virtual int RecvResponse(BaseTcpStream &socket, BaseResponse *&resp) override;
+
+    virtual int GenRequest(BaseRequest *&req) override;
+    virtual int GenResponse(BaseResponse *&resp) override;
+
+    virtual bool keep_alive() const override;
+
+  private:
+    std::string version_;
+    bool keep_alive_{false};
+};
+
+
+}  // namespace phxrpc
 

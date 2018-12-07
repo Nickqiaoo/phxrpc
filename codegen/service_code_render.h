@@ -24,7 +24,6 @@ See the AUTHORS file for names of contributors.
 #include <cstdio>
 #include <map>
 #include <string>
-#include <vector>
 
 
 namespace phxrpc {
@@ -33,58 +32,34 @@ namespace phxrpc {
 class NameRender;
 class SyntaxTree;
 class SyntaxFunc;
-typedef std::vector<SyntaxFunc> SyntaxFuncVector;
 
 class ServiceCodeRender {
   public:
     ServiceCodeRender(NameRender &name_render);
     virtual ~ServiceCodeRender();
 
-    virtual void GenerateServiceHpp(SyntaxTree *stree,
-                                    const SyntaxFuncVector &mqtt_funcs,
-                                    FILE *write);
+    virtual void GenerateServiceHpp(SyntaxTree *stree, FILE *write);
 
-    virtual void GenerateServiceCpp(SyntaxTree *stree,
-                                    const SyntaxFuncVector &mqtt_funcs,
-                                    FILE *write);
+    virtual void GenerateServiceCpp(SyntaxTree *stree, FILE *write);
 
-    virtual void GenerateServiceImplHpp(SyntaxTree *stree,
-                                        const SyntaxFuncVector &mqtt_funcs,
-                                        FILE *write, const bool is_uthread_mode);
+    virtual void GenerateServiceImplHpp(SyntaxTree *stree, FILE *write,
+                                        const bool is_uthread_mode);
 
-    virtual void GenerateServiceImplCpp(SyntaxTree *stree,
-                                        const SyntaxFuncVector &mqtt_funcs,
-                                        FILE *write, const bool is_uthread_mode);
+    virtual void GenerateServiceImplCpp(SyntaxTree *stree, FILE *write,
+                                        const bool is_uthread_mode);
 
-    virtual void GenerateDispatcherHpp(SyntaxTree *stree,
-                                       const SyntaxFuncVector &mqtt_funcs,
-                                       FILE *write);
+    virtual void GenerateDispatcherHpp(SyntaxTree *stree, FILE *write);
 
-    virtual void GenerateDispatcherCpp(SyntaxTree *stree,
-                                       const SyntaxFuncVector &mqtt_funcs,
-                                       FILE *write);
+    virtual void GenerateDispatcherCpp(SyntaxTree *stree, FILE *write);
 
   protected:
-    struct FunctionItem {
-        std::string protocol_name;
-        std::string function_name;
-    };
-
     virtual void GetServiceFuncDeclaration(SyntaxTree *stree,
             const SyntaxFunc *const func, int is_header, int is_impl,
             int need_param_name, std::string *result);
 
-    virtual void GenerateMqttDispatcherFunc(SyntaxTree *stree,
-                                            const SyntaxFunc *const func,
-                                            FILE *write);
-
-    virtual void GenerateDispatcherFunc(SyntaxTree *stree,
+    virtual void GenerateDispatcherFunc(const SyntaxTree *const stree,
                                         const SyntaxFunc *const func,
                                         FILE *write);
-
-    virtual void GenerateMqttFuncMap(SyntaxTree *stree,
-                                     const std::vector<FunctionItem> functions,
-                                     FILE *write);
 
     virtual void GenerateURIFuncMap(SyntaxTree *stree, FILE *write);
 

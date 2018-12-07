@@ -23,5 +23,6 @@ See the AUTHORS file for names of contributors.
 
 #include "http/http_client.h"
 #include "http/http_msg.h"
-#include "http/http_protocol.h"
+#include "http/http_msg_handler.h"
+#include "http/http_msg_handler_factory.h"
 

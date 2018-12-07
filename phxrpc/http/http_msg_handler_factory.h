@@ -19,20 +19,22 @@ permissions and limitations under the License.
 See the AUTHORS file for names of contributors.
 */
 
-#include "base_protocol.h"
+#pragma once
 
-#include <cassert>
-#include <cctype>
-#include <cstdio>
-#include <cstdlib>
-#include <cstring>
-#include <ctime>
-
-#include "phxrpc/file/log_utils.h"
+#include "phxrpc/msg.h"
 
 
 namespace phxrpc {
 
 
-}
+class HttpMessageHandlerFactory : virtual public BaseMessageHandlerFactory {
+  public:
+    HttpMessageHandlerFactory() = default;
+    virtual ~HttpMessageHandlerFactory() override = default;
+
+    virtual std::unique_ptr<BaseMessageHandler> Create() override;
+};
+
+
+}  // namespace phxrpc
 

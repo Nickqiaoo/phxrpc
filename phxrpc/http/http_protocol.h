@@ -21,8 +21,6 @@ See the AUTHORS file for names of contributors.
 
 #pragma once
 
-#include "phxrpc/msg/base_protocol.h"
-
 
 namespace phxrpc {
 
@@ -33,33 +31,32 @@ class HttpMessage;
 class HttpRequest;
 class HttpResponse;
 
-class HttpProtocol : public BaseProtocol {
+class HttpProtocol {
   public:
     enum {
         MAX_RECV_LEN = 8192
     };
 
-    HttpProtocol() = default;
-    virtual ~HttpProtocol() override = default;
+    enum {
+        SC_NOT_MODIFIED = 304
+    };
+
+    enum class Direction {
+        NONE = 0,
+        REQUEST,
+        RESPONSE,
+        MAX,
+    };
 
     static void FixRespHeaders(const HttpRequest &req, HttpResponse *resp);
-
-    static void FixRespHeaders(bool is_keep_alive, const char *version, HttpResponse *resp);
-
-    static ReturnCode SendReqHeader(BaseTcpStream &socket, const char *method, const HttpRequest &req);
-
-    static ReturnCode RecvRespStartLine(BaseTcpStream &socket, HttpResponse *resp);
-
-    static ReturnCode RecvReqStartLine(BaseTcpStream &socket, HttpRequest *req);
-
-    static ReturnCode RecvHeaders(BaseTcpStream &socket, HttpMessage *msg);
-
-    static ReturnCode RecvBody(BaseTcpStream &socket, HttpMessage *msg);
-
-    static ReturnCode RecvReq(BaseTcpStream &socket, HttpRequest *req);
-
-    virtual ReturnCode ServerRecv(BaseTcpStream &socket,
-                                  BaseRequest *&req) override;
+    static void FixRespHeaders(bool keep_alive, const char *version, HttpResponse *resp);
+    static int SendReqHeader(BaseTcpStream &socket, const char *method, const HttpRequest &req);
+    static int RecvRespStartLine(BaseTcpStream &socket, HttpResponse *resp);
+    static int RecvReqStartLine(BaseTcpStream &socket, HttpRequest *req);
+    static int RecvHeaders(BaseTcpStream &socket, HttpMessage *msg);
+    static int RecvBody(BaseTcpStream &socket, HttpMessage *msg);
+    static int RecvReq(BaseTcpStream &socket, HttpRequest *req);
+    static int RecvResp(BaseTcpStream &socket, HttpResponse *resp);
 };
 
 

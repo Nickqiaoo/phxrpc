@@ -19,14 +19,12 @@ permissions and limitations under the License.
 See the AUTHORS file for names of contributors.
 */
 
+#include <stdio.h>
 #include <syslog.h>
-
-#include <cstdio>
-
 #include <google/protobuf/message_lite.h>
 
+#include "caller.h"
 #include "monitor_factory.h"
-#include "http_caller.h"
 
 #include "phxrpc/network.h"
 #include "phxrpc/http.h"
@@ -40,19 +38,19 @@ int main(int argc, char **argv) {
         phxrpc::BlockTcpStream socket;
         if(phxrpc::BlockTcpUtils::Open(&socket, "127.0.0.1", 26161, 200, nullptr, 0)) {
             socket.SetTimeout(5000);
-            HttpRequest req;
-            HttpResponse resp;
+            HttpRequest request;
+            HttpResponse response;
 
-            req.GetContent() = "hello grpc";
-            req.SetURI("abc");
-            req.AddHeader(HttpMessage::HEADER_CONTENT_LENGTH, req.GetContent().size());
-            int ret{HttpClient::Post(socket, req, &resp)};
+            *(request.mutable_content()) = "hello grpc";
+            request.set_uri("abc");
+            request.AddHeader(HttpMessage::HEADER_CONTENT_LENGTH, request.GetContent().size());
+            int ret = HttpClient::Post(socket, request, &response);
             if (ret != 0) {
                 printf("post fail, %zu, ret %d\n", i, ret);
                 continue;
             }
 
-            const char *result{resp.GetHeaderValue(HttpMessage::HEADER_X_PHXRPC_RESULT)};
+            const char *result = response.GetHeaderValue(HttpMessage::HEADER_X_PHXRPC_RESULT);
             ret = atoi(nullptr == result ? "-1" : result);
             printf("post ret %d\n", ret);
         }

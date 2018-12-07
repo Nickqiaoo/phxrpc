@@ -23,7 +23,6 @@ See the AUTHORS file for names of contributors.
 
 #include <cstdio>
 #include <string>
-#include <vector>
 
 
 namespace phxrpc {
@@ -32,43 +31,30 @@ namespace phxrpc {
 class NameRender;
 class SyntaxTree;
 class SyntaxFunc;
-typedef std::vector<SyntaxFunc> SyntaxFuncVector;
 
 class ClientCodeRender {
   public:
     ClientCodeRender(NameRender &name_render);
     virtual ~ClientCodeRender();
 
-    void GenerateStubHpp(SyntaxTree *stree, const SyntaxFuncVector &mqtt_funcs,
-                         FILE *write);
+    void GenerateStubHpp(SyntaxTree *stree, FILE *write);
 
-    void GenerateStubCpp(SyntaxTree *stree, const SyntaxFuncVector &mqtt_funcs,
-                         FILE *write);
+    void GenerateStubCpp(SyntaxTree *stree, FILE *write);
 
-    void GenerateClientHpp(SyntaxTree *stree,
-                           const SyntaxFuncVector &mqtt_funcs,
-                           FILE *write, const bool is_uthread_mode);
+    void GenerateClientHpp(SyntaxTree *stree, FILE *write, const bool is_uthread_mode);
 
-    void GenerateClientCpp(SyntaxTree *stree,
-                           const SyntaxFuncVector &mqtt_funcs,
-                           FILE *write, const bool is_uthread_mode);
+    void GenerateClientCpp(SyntaxTree *stree, FILE *write, const bool is_uthread_mode);
 
     void GenerateClientEtc(SyntaxTree *stree, FILE *write);
 
   private:
-    void GetStubFuncDeclaration(SyntaxTree *stree, const SyntaxFunc *const func,
+    void GetStubFuncDeclaration(const SyntaxTree *const stree, const SyntaxFunc *const func,
                                 int is_header, std::string *result);
 
-    void GenerateMqttStubFunc(SyntaxTree *stree, const SyntaxFunc *const func,
-                              FILE *write);
+    void GenerateStubFunc(const SyntaxTree *const stree, const SyntaxFunc *const func, FILE *write);
 
-    void GenerateStubFunc(SyntaxTree *stree, const SyntaxFunc *const func,
-                          FILE *write);
-
-    void GetClienfuncDeclaration(SyntaxTree *stree,
-                                 const SyntaxFunc *const func,
-                                 int is_header, std::string *result,
-                                 const bool is_uthread_mode);
+    void GetClienfuncDeclaration(const SyntaxTree *const stree, const SyntaxFunc *const func,
+                                 const int is_header, std::string *result, const bool is_uthread_mode);
 
     NameRender &name_render_;
 };

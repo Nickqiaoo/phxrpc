@@ -36,9 +36,9 @@ public:
     BaseTcpStreamBuf(size_t buf_size);
     virtual ~BaseTcpStreamBuf();
 
-    int underflow();  //从socket读到缓冲区
+    int underflow();
     int overflow(int c = traits_type::eof());
-    int sync();  //将写缓冲区中已写的字符发送
+    int sync();
 
 protected:
     virtual ssize_t precv(void * buf, size_t len, int flags) = 0;
@@ -55,7 +55,7 @@ public:
 
     virtual bool SetTimeout(int socket_timeout_ms) = 0;
 
-    void NewRdbuf(BaseTcpStreamBuf * buf);  //设置缓冲
+    void NewRdbuf(BaseTcpStreamBuf * buf);
 
     bool GetRemoteHost(char * ip, size_t size, int * port = NULL);
 
@@ -64,7 +64,7 @@ public:
     virtual int LastError() = 0;
 
 protected:
-    virtual int SocketFd() = 0; //返回socket文件描述符
+    virtual int SocketFd() = 0;
 
     const size_t buf_size_;
 };

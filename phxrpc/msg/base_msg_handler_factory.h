@@ -21,8 +21,26 @@ See the AUTHORS file for names of contributors.
 
 #pragma once
 
-#include "mqtt/mqtt_client.h"
-//#include "mqtt/mqtt_dispatcher.h"
-#include "mqtt/mqtt_msg.h"
-#include "mqtt/mqtt_protocol.h"
+#include <functional>
+#include <memory>
+
+
+namespace phxrpc {
+
+
+class BaseMessageHandlerFactory;
+using BaseMessageHandlerFactoryCreateFunc =
+        std::function<std::unique_ptr<BaseMessageHandlerFactory>()>;
+class BaseMessageHandler;
+
+class BaseMessageHandlerFactory {
+  public:
+    BaseMessageHandlerFactory() = default;
+    virtual ~BaseMessageHandlerFactory() = default;
+
+    virtual std::unique_ptr<BaseMessageHandler> Create() = 0;
+};
+
+
+}  // namespace phxrpc
 

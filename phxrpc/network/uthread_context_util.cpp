@@ -20,32 +20,39 @@ See the AUTHORS file for names of contributors.
 */
 
 #include "uthread_context_util.h"
+
 #include <assert.h>
 #include <unistd.h>
 #include <sys/mman.h>
 
+#include "phxrpc/comm.h"
+
 namespace phxrpc {
 
+
 #ifdef __APPLE__
-	#define MAP_ANONYMOUS MAP_ANON
+#define MAP_ANONYMOUS MAP_ANON
 #endif
+
 
 UThreadStackMemory :: UThreadStackMemory(const size_t stack_size, const bool need_protect) :
     raw_stack_(nullptr), stack_(nullptr), need_protect_(need_protect) {
-    int page_size = getpagesize();  //获得内存分页大小
-    if ((stack_size % page_size) != 0) {  //使栈大小是页大小的整数倍
+    int page_size = getpagesize();
+    if ((stack_size % page_size) != 0) {
         stack_size_ = (stack_size / page_size + 1) * page_size;
     } else {
         stack_size_ = stack_size;
     }
 
-    if (need_protect) {  //如果打开了保护模式
-        raw_stack_ = mmap(NULL, stack_size_ + page_size * 2,  //多分配两页
+    if (need_protect) {
+        raw_stack_ = mmap(NULL, stack_size_ + page_size * 2, 
                 PROT_READ | PROT_WRITE, MAP_ANONYMOUS | MAP_PRIVATE, -1, 0);
         assert(raw_stack_ != nullptr);
-        assert(mprotect(raw_stack_, page_size, PROT_NONE) == 0);  //使这两页无法访问
-        assert(mprotect((void *)((char *)raw_stack_ + stack_size_ + page_size), page_size, PROT_NONE) == 0);
-        stack_ = (void *)((char *)raw_stack_ + page_size);  //栈前后空出一页
+
+        PHXRPC_ASSERT(mprotect(raw_stack_, page_size, PROT_NONE) == 0);
+        PHXRPC_ASSERT(mprotect((void *)((char *)raw_stack_ + stack_size_ + page_size), page_size, PROT_NONE) == 0);
+
+        stack_ = (void *)((char *)raw_stack_ + page_size);
     } else {
         raw_stack_ = mmap(NULL, stack_size_, PROT_READ | PROT_WRITE, MAP_ANONYMOUS | MAP_PRIVATE, -1, 0);
         assert(raw_stack_ != nullptr);
@@ -56,11 +63,11 @@ UThreadStackMemory :: UThreadStackMemory(const size_t stack_size, const bool nee
 UThreadStackMemory :: ~UThreadStackMemory() {
     int page_size = getpagesize();
     if (need_protect_) {
-        assert(mprotect(raw_stack_, page_size, PROT_READ | PROT_WRITE) == 0);
-        assert(mprotect((void *)((char *)raw_stack_ + stack_size_ + page_size), page_size, PROT_READ | PROT_WRITE) == 0);
-        assert(munmap(raw_stack_, stack_size_ + page_size * 2) == 0);
+        PHXRPC_ASSERT(mprotect(raw_stack_, page_size, PROT_READ | PROT_WRITE) == 0);
+        PHXRPC_ASSERT(mprotect((void *)((char *)raw_stack_ + stack_size_ + page_size), page_size, PROT_READ | PROT_WRITE) == 0);
+        PHXRPC_ASSERT(munmap(raw_stack_, stack_size_ + page_size * 2) == 0);
     } else {
-        assert(munmap(raw_stack_, stack_size_) == 0);
+        PHXRPC_ASSERT(munmap(raw_stack_, stack_size_) == 0);
     }
 }
 
@@ -72,4 +79,6 @@ size_t UThreadStackMemory :: size() {
     return stack_size_;
 }
 
-} //namespace phxrpc
+
+}  // namespace phxrpc
+

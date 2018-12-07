@@ -22,7 +22,6 @@ See the AUTHORS file for names of contributors.
 #pragma once
 
 #include <cstdio>
-#include <vector>
 
 
 namespace phxrpc {
@@ -30,29 +29,19 @@ namespace phxrpc {
 
 class NameRender;
 class SyntaxTree;
-class SyntaxFunc;
-typedef std::vector<SyntaxFunc> SyntaxFuncVector;
 
 class ToolCodeRender {
   public:
     ToolCodeRender(NameRender &name_render);
     virtual ~ToolCodeRender();
 
-    void GenerateToolHpp(SyntaxTree *stree,
-                         const SyntaxFuncVector &mqtt_funcs,
-                         FILE *write);
+    void GenerateToolHpp(SyntaxTree *stree, FILE *write);
 
-    void GenerateToolCpp(SyntaxTree *stree,
-                         const SyntaxFuncVector &mqtt_funcs,
-                         FILE *write);
+    void GenerateToolCpp(SyntaxTree *stree, FILE *write);
 
-    void GenerateToolImplHpp(SyntaxTree *stree,
-                             const SyntaxFuncVector &mqtt_funcs,
-                             FILE *write);
+    void GenerateToolImplHpp(SyntaxTree *stree, FILE *write);
 
-    void GenerateToolImplCpp(SyntaxTree *stree,
-                             const SyntaxFuncVector &mqtt_funcs,
-                             FILE *write);
+    void GenerateToolImplCpp(SyntaxTree *stree, FILE *write);
 
     void GenerateToolMainCpp(SyntaxTree *stree, FILE *write);
 
@@ -61,5 +50,5 @@ class ToolCodeRender {
 };
 
 
-}
+}  // namespace phxrpc
 

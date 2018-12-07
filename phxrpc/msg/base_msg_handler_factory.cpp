@@ -19,34 +19,14 @@ permissions and limitations under the License.
 See the AUTHORS file for names of contributors.
 */
 
-#pragma once
-
-#include "phxrpc/msg/base_protocol.h"
+#include "phxrpc/msg/base_msg_handler_factory.h"
 
 
 namespace phxrpc {
 
 
-enum class ReturnCode;
-
-class BaseTcpStream;
-
-class MqttMessage;
-
-class MqttProtocol : public BaseProtocol {
-  public:
-    MqttProtocol() = default;
-    virtual ~MqttProtocol() override = default;
-
-    static ReturnCode SendMessage(BaseTcpStream &socket,
-                                  const MqttMessage *const msg);
-    static ReturnCode RecvMessage(BaseTcpStream &socket,
-                                  MqttMessage *const msg);
-
-    virtual ReturnCode ServerRecv(BaseTcpStream &socket,
-                                  BaseRequest *&req) override;
-};
+using namespace std;
 
 
-}
+}  // namespace phxrpc
 

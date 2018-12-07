@@ -19,16 +19,18 @@ permissions and limitations under the License.
 See the AUTHORS file for names of contributors.
 */
 
+#include "phxrpc/http/http_client.h"
+
 #include <cassert>
 #include <cctype>
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
 
-#include "http_client.h"
-#include "http_msg.h"
-#include "http_protocol.h"
 #include "phxrpc/file/log_utils.h"
+#include "phxrpc/http/http_msg.h"
+#include "phxrpc/http/http_msg_handler.h"
+#include "phxrpc/http/http_protocol.h"
 #include "phxrpc/network/socket_stream_base.h"
 
 
@@ -36,13 +38,13 @@ namespace phxrpc {
 
 
 int HttpClient::Get(BaseTcpStream &socket, const HttpRequest &req, HttpResponse *resp) {
-    ReturnCode ret{HttpProtocol::SendReqHeader(socket, "GET", req)};
+    int ret{HttpProtocol::SendReqHeader(socket, "GET", req)};
 
-    if (ReturnCode::OK == ret) {
+    if (0 == ret) {
         ret = HttpProtocol::RecvRespStartLine(socket, resp);
-        if (ReturnCode::OK == ret)
+        if (0 == ret)
             ret = HttpProtocol::RecvHeaders(socket, resp);
-        if (ReturnCode::OK == ret && SC_NOT_MODIFIED != resp->GetStatusCode()) {
+        if (0 == ret && SC_NOT_MODIFIED != resp->status_code()) {
             ret = HttpProtocol::RecvBody(socket, resp);
         }
     }
@@ -58,34 +60,34 @@ int HttpClient::Post(BaseTcpStream &socket, const HttpRequest &req, HttpResponse
 
 int HttpClient::Post(BaseTcpStream &socket, const HttpRequest &req, HttpResponse *resp,
                      PostStat *post_stat) {
-    ReturnCode ret{HttpProtocol::SendReqHeader(socket, "POST", req)};
+    int ret{HttpProtocol::SendReqHeader(socket, "POST", req)};
 
-    if (ReturnCode::OK == ret) {
-        socket << req.GetContent();
+    if (0 == ret) {
+        socket << req.content();
         if(!socket.flush().good())
-            ret = static_cast<ReturnCode>(socket.LastError());
+            ret = static_cast<int>(socket.LastError());
     } else {
-        if (ReturnCode::ERROR_SOCKET_STREAM_NORMAL_CLOSED != ret) {
+        if (SocketStreamError_Normal_Closed != ret) {
             post_stat->send_error_ = true;
             phxrpc::log(LOG_ERR, "ERR: sendReqHeader fail");
         }
         return static_cast<int>(ret);
     }
 
-    if (ReturnCode::OK == ret) {
+    if (0 == ret) {
         ret = HttpProtocol::RecvRespStartLine(socket, resp);
-        if (ReturnCode::OK == ret)
+        if (0 == ret)
             ret = HttpProtocol::RecvHeaders(socket, resp);
 
-        if (ReturnCode::OK == ret && SC_NOT_MODIFIED != resp->GetStatusCode()) {
+        if (0 == ret && SC_NOT_MODIFIED != resp->status_code()) {
             ret = HttpProtocol::RecvBody(socket, resp);
         }
 
-        if (ReturnCode::OK != ret && ReturnCode::ERROR_SOCKET_STREAM_NORMAL_CLOSED != ret) {
+        if (0 != ret && SocketStreamError_Normal_Closed != ret) {
             post_stat->recv_error_ = true;
         }
     } else {
-        if (ReturnCode::ERROR_SOCKET_STREAM_NORMAL_CLOSED != ret) {
+        if (SocketStreamError_Normal_Closed != ret) {
             post_stat->send_error_ = true;
             phxrpc::log(LOG_ERR, "ERR: sendReqBody fail");
         }
@@ -95,12 +97,12 @@ int HttpClient::Post(BaseTcpStream &socket, const HttpRequest &req, HttpResponse
 }
 
 int HttpClient::Head(BaseTcpStream & socket, const HttpRequest &req, HttpResponse *resp) {
-    ReturnCode ret{HttpProtocol::SendReqHeader(socket, "HEAD", req)};
+    int ret{HttpProtocol::SendReqHeader(socket, "HEAD", req)};
 
-    if (ReturnCode::OK == ret)
+    if (0 == ret)
         ret = HttpProtocol::RecvRespStartLine(socket, resp);
 
-    if (ReturnCode::OK == ret)
+    if (0 == ret)
         ret = HttpProtocol::RecvHeaders(socket, resp);
 
     return static_cast<int>(ret);

@@ -19,30 +19,15 @@ permissions and limitations under the License.
 See the AUTHORS file for names of contributors.
 */
 
-#pragma once
-
-#include <memory>
-#include <sys/mman.h>
-
+#include <cstdio>
+#include <cstdlib>
 
 namespace phxrpc {
 
+void __bad_assertion(const char *mess) {
+    fputs(mess, stderr);
+    abort();
+}
 
-class UThreadStackMemory {
-  public:
-    UThreadStackMemory(const size_t stack_size, const bool need_protect = true);
-    ~UThreadStackMemory();
-
-    void * top();
-    size_t size();
-
-  private:
-    void * raw_stack_;
-    void * stack_;
-    size_t stack_size_;
-    int need_protect_;
-};
-
-
-}  // namespace phxrpc
+}
 

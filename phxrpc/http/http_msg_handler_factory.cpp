@@ -19,24 +19,23 @@ permissions and limitations under the License.
 See the AUTHORS file for names of contributors.
 */
 
-#pragma once
+#include "phxrpc/http/http_msg_handler_factory.h"
 
-#include "base_msg.h"
+#include <memory>
 
-#include "phxrpc/network.h"
+#include "phxrpc/http/http_msg_handler.h"
 
 
 namespace phxrpc {
 
 
-class BaseProtocol {
-  public:
-    BaseProtocol() = default;
-    virtual ~BaseProtocol() = default;
-
-    virtual ReturnCode ServerRecv(BaseTcpStream &socket, BaseRequest *&req) = 0;
-};
+using namespace std;
 
 
+unique_ptr<BaseMessageHandler> HttpMessageHandlerFactory::Create() {
+    return move(unique_ptr<BaseMessageHandler>(new HttpMessageHandler));
 }
+
+
+}  // namespace phxrpc
 

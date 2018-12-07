@@ -43,10 +43,10 @@ void openlog(const char *argv0, const char *log_dir, int priority) {
     }
 
     global_priority_ = priority;
-    if( NULL != global_openlog_ ) {  //使用自定义log
+    if( NULL != global_openlog_ ) {
         global_openlog_( argv0, new_path, priority );
-    } else {  //使用默认log
-        ::openlog( argv0, LOG_CONS | LOG_PID, 0 );
+    } else {
+        ::openlog( argv0, LOG_CONS | LOG_PID, priority );
     }
 }
 

@@ -59,7 +59,12 @@ class ServerConfig {
     void SetLogLevel(int log_level);
     int GetLogLevel() const;
 
+  protected:
+    void set_section_name_prefix(const char *section_name_prefix);
+    const char *section_name_prefix() const;
+
   private:
+    char section_name_prefix_[64];
     char bind_ip_[32];
     int port_;
     int max_threads_;
@@ -75,7 +80,7 @@ class HshaServerConfig : public ServerConfig {
     HshaServerConfig();
     virtual ~HshaServerConfig() override;
 
-    bool DoRead(Config &config);
+    bool DoRead(Config &config) override;
 
     void SetMaxConnections(const int max_connections);
     int GetMaxConnections() const;

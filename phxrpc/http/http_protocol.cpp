@@ -19,17 +19,14 @@ permissions and limitations under the License.
 See the AUTHORS file for names of contributors.
 */
 
+#include "phxrpc/http/http_protocol.h"
+
 #include <cassert>
-#include <cctype>
-#include <cstdio>
-#include <cstdlib>
 #include <cstring>
-#include <ctime>
+#include <string>
 
-#include "http_protocol.h"
-#include "http_msg.h"
-
-#include "phxrpc/file/log_utils.h"
+#include "phxrpc/file.h"
+#include "phxrpc/http/http_msg.h"
 #include "phxrpc/network/socket_stream_base.h"
 
 
@@ -37,16 +34,15 @@ namespace {
 
 
 using namespace std;
- 
 
-//返回s中del之前的字符，并将s重新指向del之后
-char *SeparateStr(char **s, const char *del) {  //因为要改变指针本身，所以要用二级指针
+
+char *SeparateStr(char **s, const char *del) {
     char *d, *tok;
 
     if (!s || !*s)
         return nullptr;
     tok = *s;
-    d = strstr(tok, del);  //返回tok中第一次出现del的位置
+    d = strstr(tok, del);
 
     if (d) {
         *s = d + strlen(del);
@@ -66,7 +62,7 @@ void URLEncode(const char *source, char *dest, size_t length) {
     size_t n = 0;
 
     for (; *p && n < length; p++, q++, n++) {
-        if (isalnum((int) *p)) {  //判断是否为英文字母或数字
+        if (isalnum((int) *p)) {
             *q = *p;
         } else if (*p == ' ') {
             *q = '+';
@@ -77,9 +73,9 @@ void URLEncode(const char *source, char *dest, size_t length) {
             }
 
             *q++ = '%';
-            int digit = *p >> 4;  //取高四位
-            *q++ = urlencstring[digit];  //转换为16进制 
-            digit = *p & 0xf;  //取低四位
+            int digit = *p >> 4;
+            *q++ = urlencstring[digit];
+            digit = *p & 0xf;
             *q = urlencstring[digit];
             n += 2;
         }
@@ -97,12 +93,12 @@ namespace phxrpc {
 
 using namespace std;
 
-//填充响应头
-void HttpProtocol::FixRespHeaders(bool is_keep_alive, const char *version, HttpResponse *resp) {
+
+void HttpProtocol::FixRespHeaders(bool keep_alive, const char *version, HttpResponse *resp) {
     char buffer[256]{0};
 
     // check keep alive header
-    if (is_keep_alive) {
+    if (keep_alive) {
         if (nullptr == resp->GetHeaderValue(HttpMessage::HEADER_CONNECTION)) {
             resp->AddHeader(HttpMessage::HEADER_CONNECTION, "Keep-Alive");
         }
@@ -121,20 +117,18 @@ void HttpProtocol::FixRespHeaders(bool is_keep_alive, const char *version, HttpR
     resp->AddHeader(HttpMessage::HEADER_SERVER, "http/phxrpc");
 
     // use the same version
-    resp->SetVersion(version);
+    resp->set_version(version);
 }
 
 void HttpProtocol::FixRespHeaders(const HttpRequest &req, HttpResponse *resp) {
-    FixRespHeaders(req.IsKeepAlive(), req.GetVersion(), resp);
+    FixRespHeaders(req.keep_alive(), req.version(), resp);
 }
 
-
-//发送请求
-ReturnCode HttpProtocol::SendReqHeader(BaseTcpStream &socket, const char *method, const HttpRequest &req) {
+int HttpProtocol::SendReqHeader(BaseTcpStream &socket, const char *method, const HttpRequest &req) {
     string url;
 
     if (req.GetParamCount() > 0) {
-        url.append(req.GetURI());
+        url.append(req.uri());
         url.append("?");
 
         char tmp[1024]{0};
@@ -149,8 +143,8 @@ ReturnCode HttpProtocol::SendReqHeader(BaseTcpStream &socket, const char *method
         }
     }
 
-    socket << method << " " << (url.size() > 0 ? url.c_str() : req.GetURI())
-            << " " << req.GetVersion() << "\r\n";
+    socket << method << " " << (url.size() > 0 ? url.c_str() : req.uri())
+            << " " << req.version() << "\r\n";
 
     for (size_t i{0}; req.GetHeaderCount() > i; ++i) {
         const char *name{req.GetHeaderName(i)};
@@ -159,28 +153,27 @@ ReturnCode HttpProtocol::SendReqHeader(BaseTcpStream &socket, const char *method
         socket << name << ": " << val << "\r\n";
     }
 
-    if (req.GetContent().size() > 0) {
+    if (0 < req.content().size()) {
         if (nullptr == req.GetHeaderValue(HttpMessage::HEADER_CONTENT_LENGTH)) {
             socket << HttpMessage::HEADER_CONTENT_LENGTH << ": "
-                    << req.GetContent().size() << "\r\n";
+                    << req.content().size() << "\r\n";
         }
     }
 
     socket << "\r\n";
 
-    if (req.GetContent().size() == 0) {
+    if (0 == req.content().size()) {
         if (socket.flush().good()) {
-            return ReturnCode::OK;
+            return 0;
         } else {
-            return static_cast<ReturnCode>(socket.LastError());
+            return static_cast<int>(socket.LastError());
         }
     }
 
-    return ReturnCode::OK;
+    return 0;
 }
 
-//解析应答首行
-ReturnCode HttpProtocol::RecvRespStartLine(BaseTcpStream &socket, HttpResponse *resp) {
+int HttpProtocol::RecvRespStartLine(BaseTcpStream &socket, HttpResponse *resp) {
     char line[1024]{0};
 
     bool is_good{socket.getlineWithTrimRight(line, sizeof(line)).good()};
@@ -191,11 +184,11 @@ ReturnCode HttpProtocol::RecvRespStartLine(BaseTcpStream &socket, HttpResponse *
             char *second = SeparateStr(&pos, " ");
 
             if (nullptr != first)
-                resp->SetVersion(first);
+                resp->set_version(first);
             if (nullptr != second)
-                resp->SetStatusCode(atoi(second));
+                resp->set_status_code(atoi(second));
             if (nullptr != pos)
-                resp->SetReasonPhrase(pos);
+                resp->set_reason_phrase(pos);
         } else {
             is_good = false;
             phxrpc::log(LOG_WARNING, "WARN: Invalid response <%s>, ignored", line);
@@ -203,14 +196,14 @@ ReturnCode HttpProtocol::RecvRespStartLine(BaseTcpStream &socket, HttpResponse *
     }
 
     if (is_good) {
-        return ReturnCode::OK;
+        return 0;
     } else {
         phxrpc::log(LOG_WARNING, "%s, fail", __func__);
-        return static_cast<ReturnCode>(socket.LastError());
+        return static_cast<int>(socket.LastError());
     }
 }
 
-ReturnCode HttpProtocol::RecvReqStartLine(BaseTcpStream &socket, HttpRequest *req) {
+int HttpProtocol::RecvReqStartLine(BaseTcpStream &socket, HttpRequest *req) {
     char line[1024]{0};
 
     bool is_good = socket.getlineWithTrimRight(line, sizeof(line)).good();
@@ -220,27 +213,23 @@ ReturnCode HttpProtocol::RecvReqStartLine(BaseTcpStream &socket, HttpRequest *re
         char *second = SeparateStr(&pos, " ");
 
         if (nullptr != first)
-            req->SetMethod(first);
+            req->set_method(first);
         if (nullptr != second)
-            req->SetURI(second);
+            req->set_uri(second);
         if (nullptr != pos)
-            req->SetVersion(pos);
-
-        char peer[128] = { 0 };
-        socket.GetRemoteHost(peer, sizeof(peer));
-        req->SetClientIP(peer);
+            req->set_version(pos);
     } else {
         //phxrpc::log(LOG_WARNING, "WARN: Invalid request <%s>, ignored", line);
     }
 
     if (is_good) {
-        return ReturnCode::OK;
+        return 0;
     } else {
-        return static_cast<ReturnCode>(socket.LastError());
+        return static_cast<int>(socket.LastError());
     }
 }
 
-ReturnCode HttpProtocol::RecvHeaders(BaseTcpStream &socket, HttpMessage *msg) {
+int HttpProtocol::RecvHeaders(BaseTcpStream &socket, HttpMessage *msg) {
     bool is_good{false};
 
     char *line = (char *)malloc(MAX_RECV_LEN);
@@ -258,7 +247,7 @@ ReturnCode HttpProtocol::RecvHeaders(BaseTcpStream &socket, HttpMessage *msg) {
             if (multi_line.size() > 0) {
                 char * header = (char*) multi_line.c_str();
                 pos = header;
-                SeparateStr(&pos, ":"); //这里从:切断，header就是name，pos是value
+                SeparateStr(&pos, ":");
                 for (; nullptr != pos && '\0' != *pos && isspace(*pos);)
                     pos++;
                 msg->AddHeader(header, nullptr == pos ? "" : pos);
@@ -266,23 +255,23 @@ ReturnCode HttpProtocol::RecvHeaders(BaseTcpStream &socket, HttpMessage *msg) {
             multi_line.clear();
         }
 
-        for (pos = line; '\0' != *pos && isspace(*pos);)  //排除前面的空格
+        for (pos = line; '\0' != *pos && isspace(*pos);)
             pos++;
         if ('\0' != *pos)
-            multi_line.append(pos);  //保存一行
+            multi_line.append(pos);
     } while (is_good && '\0' != *line);
 
     free(line);
     line = nullptr;
 
     if (is_good) {
-        return ReturnCode::OK;
+        return 0;
     } else {
-        return static_cast<ReturnCode>(socket.LastError());
+        return static_cast<int>(socket.LastError());
     }
 }
 
-ReturnCode HttpProtocol::RecvBody(BaseTcpStream &socket, HttpMessage *msg) {
+int HttpProtocol::RecvBody(BaseTcpStream &socket, HttpMessage *msg) {
     bool is_good{true};
 
     const char *encoding{msg->GetHeaderValue(HttpMessage::HEADER_TRANSFER_ENCODING)};
@@ -290,7 +279,7 @@ ReturnCode HttpProtocol::RecvBody(BaseTcpStream &socket, HttpMessage *msg) {
     char *buff{(char *)malloc(MAX_RECV_LEN)};
     assert(nullptr != buff);
 
-    if (nullptr != encoding && 0 == strcasecmp(encoding, "chunked")) {  //是否是分块传输
+    if (nullptr != encoding && 0 == strcasecmp(encoding, "chunked")) {
         // read chunked, refer to rfc2616 section[19.4.6]
 
         for (; is_good;) {
@@ -331,7 +320,7 @@ ReturnCode HttpProtocol::RecvBody(BaseTcpStream &socket, HttpMessage *msg) {
                     break;
                 }
             }
-        } else if (BaseMessage::Direction::RESPONSE == msg->direction()) {
+        } else if (HttpMessage::Direction::RESPONSE == msg->direction()) {
             // hasn't Content-Length header, read until socket close
             for (; is_good;) {
                 is_good = socket.read(buff, MAX_RECV_LEN).good();
@@ -347,29 +336,34 @@ ReturnCode HttpProtocol::RecvBody(BaseTcpStream &socket, HttpMessage *msg) {
     free(buff);
 
     if (is_good) {
-        return ReturnCode::OK;
+        return 0;
     } else {
-        return static_cast<ReturnCode>(socket.LastError());
+        return static_cast<int>(socket.LastError());
     }
 }
 
-ReturnCode HttpProtocol::RecvReq(BaseTcpStream &socket, HttpRequest *req) {
-    ReturnCode ret{RecvReqStartLine(socket, req)};
+int HttpProtocol::RecvReq(BaseTcpStream &socket, HttpRequest *req) {
+    int ret{RecvReqStartLine(socket, req)};
 
-    if (ReturnCode::OK == ret)
+    if (0 == ret)
         ret = RecvHeaders(socket, req);
 
-    if (ReturnCode::OK == ret)
+    if (0 == ret)
         ret = RecvBody(socket, req);
 
     return ret;
 }
 
-ReturnCode HttpProtocol::ServerRecv(BaseTcpStream &socket, BaseRequest *&req) {
-    HttpRequest *http_req{new HttpRequest};
-    req = http_req;
+int HttpProtocol::RecvResp(BaseTcpStream &socket, HttpResponse *resp) {
+    int ret{RecvRespStartLine(socket, resp)};
+    if (0 == ret)
+        ret = RecvHeaders(socket, resp);
 
-    return RecvReq(socket, http_req);
+    if (0 == ret && SC_NOT_MODIFIED != resp->status_code()) {
+        ret = RecvBody(socket, resp);
+    }
+
+    return ret;
 }
 
 

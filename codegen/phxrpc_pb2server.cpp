@@ -19,14 +19,13 @@ permissions and limitations under the License.
 See the AUTHORS file for names of contributors.
 */
 
-#include <errno.h>
-#include <unistd.h>
-
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
+#include <errno.h>
 #include <map>
 #include <string>
+#include <unistd.h>
 #include <vector>
 
 #include "syntax_tree.h"
@@ -68,7 +67,7 @@ void Proto2Server(const char *program, const char *pb_file,
         return;
     }
 
-    NameRender name_render(syntax_tree.GetPrefix());
+    NameRender name_render(syntax_tree.prefix());
     ServerCodeRender code_render(name_render);
 
     char filename[256]{0}, tmp[256]{0};

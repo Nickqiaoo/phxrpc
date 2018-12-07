@@ -21,23 +21,9 @@ See the AUTHORS file for names of contributors.
 
 #pragma once
 
-#include "phxrpc/mqtt.h"
-#include "phxrpc/rpc/phxrpc.pb.h"
+#include "phxrpc/rpc/client_monitor.h"
 
-#include "client_monitor.h"
-
-
-namespace google {
-
-namespace protobuf {
-
-
-class MessageLite;
-
-
-}
-
-}
+#include "phxrpc/msg.h"
 
 
 namespace phxrpc {
@@ -45,43 +31,39 @@ namespace phxrpc {
 
 class BaseTcpStream;
 
-class MqttCaller {
+class Caller {
   public:
-    MqttCaller(BaseTcpStream &socket, ClientMonitor &client_monitor);
+    Caller(BaseTcpStream &socket, ClientMonitor &client_monitor,
+           BaseMessageHandlerFactory &msg_handler_factory);
 
-    virtual ~MqttCaller();
+    virtual ~Caller();
 
-    MqttConnect &GetConnect();
-    MqttPublish &GetPublish();
-    MqttDisconnect &GetDisconnect();
+    BaseRequest *GetRequest();
 
-    MqttConnack &GetConnack();
-    MqttPuback &GetPuback();
+    BaseResponse *GetResponse();
 
-    int PhxMqttConnectCall(const phxrpc::MqttConnectPb &connect,
-                           phxrpc::MqttConnackPb *connack);
-    int PhxMqttPublishCall(const phxrpc::MqttPublishPb &publish,
-                           phxrpc::MqttPubackPb *puback);
-    int PhxMqttDisconnectCall(const phxrpc::MqttDisconnectPb &disconnect);
+    int Call(const google::protobuf::Message &req,
+             google::protobuf::Message *resp);
 
-    void SetCmdId(const int cmd_id);
+    void set_uri(const char *const uri, const int cmd_id);
 
-  private:
-    void MonitorReport(phxrpc::ClientMonitor &client_monitor, bool send_error,
+    void set_keep_alive(const bool keep_alive);
+
+  protected:
+    void MonitorReport(ClientMonitor &client_monitor, bool send_error,
                        bool recv_error, size_t send_size, size_t recv_size,
                        uint64_t call_begin, uint64_t call_end);
 
     BaseTcpStream &socket_;
     ClientMonitor &client_monitor_;
     int cmd_id_;
+    std::string uri_;
+    bool keep_alive_{false};
 
-    MqttConnect connect_;
-    MqttConnack connack_;
-    MqttPublish publish_;
-    MqttPuback puback_;
-    MqttDisconnect disconnect_;
+    std::unique_ptr<BaseRequest> req_;
+    std::unique_ptr<BaseResponse> resp_;
 
-    uint16_t packet_identifier_{1};
+    BaseMessageHandlerFactory &msg_handler_factory_;
 };
 
 

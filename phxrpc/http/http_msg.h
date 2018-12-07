@@ -30,8 +30,15 @@ See the AUTHORS file for names of contributors.
 namespace phxrpc {
 
 
-class HttpMessage : virtual public BaseMessage {  //保存请求头的内容
+class HttpMessage : virtual public BaseMessage {
   public:
+    enum class Direction {
+        NONE = 0,
+        REQUEST,
+        RESPONSE,
+        MAX,
+    };
+
     static const char *HEADER_CONTENT_LENGTH;
     static const char *HEADER_CONTENT_TYPE;
     static const char *HEADER_CONNECTION;
@@ -45,8 +52,9 @@ class HttpMessage : virtual public BaseMessage {  //保存请求头的内容
     HttpMessage() = default;
     virtual ~HttpMessage() override = default;
 
-    virtual ReturnCode ToPb(google::protobuf::Message *const message) const override;
-    virtual ReturnCode FromPb(const google::protobuf::Message &message) override;
+    virtual int ToPb(google::protobuf::Message *const message) const override;
+    virtual int FromPb(const google::protobuf::Message &message) override;
+    virtual size_t size() const override;
 
     void AddHeader(const char *name, const char *value);
     void AddHeader(const char *name, int value);
@@ -55,9 +63,26 @@ class HttpMessage : virtual public BaseMessage {  //保存请求头的内容
     const char *GetHeaderName(size_t index) const;
     const char *GetHeaderValue(size_t index) const;
     const char *GetHeaderValue(const char *name) const;
+    void AppendContent(const void *content, const int length = 0, const int max_length = 0);
+
+    const std::string &content() const;
+    void set_content(const char *const content, const int length = 0);
+    std::string *mutable_content();
+
+    const char *version() const;
+    void set_version(const char *version);
+
+    Direction direction() const { return direction_; }
 
   protected:
+    void set_direction(const Direction direction) { direction_ = direction; }
+
     std::vector<std::string> header_name_list_, header_value_list_;
+
+  private:
+    std::string content_;
+    char version_[16];
+    Direction direction_{Direction::NONE};
 };
 
 class HttpRequest : public HttpMessage, public BaseRequest {
@@ -65,17 +90,11 @@ class HttpRequest : public HttpMessage, public BaseRequest {
     HttpRequest();
     virtual ~HttpRequest() override;
 
-    virtual ReturnCode Send(BaseTcpStream &socket) const override {
-        return ReturnCode::ERROR_UNIMPLEMENT;
-    }
+    virtual int Send(BaseTcpStream &socket) const override;
 
     virtual BaseResponse *GenResponse() const override;
-    virtual int IsKeepAlive() const override;
-
-    void SetMethod(const char *method);
-    const char *GetMethod() const;
-
-    int IsMethod(const char *method) const;
+    virtual bool keep_alive() const override;
+    virtual void set_keep_alive(const bool keep_alive) override;
 
     void AddParam(const char *name, const char *value);
     bool RemoveParam(const char *name);
@@ -83,6 +102,11 @@ class HttpRequest : public HttpMessage, public BaseRequest {
     const char *GetParamName(size_t index) const;
     const char *GetParamValue(size_t index) const;
     const char *GetParamValue(const char *name) const;
+
+    int IsMethod(const char *method) const;
+
+    const char *method() const;
+    void set_method(const char *method);
 
   private:
     char method_[16];
@@ -95,22 +119,24 @@ class HttpResponse : public HttpMessage, public BaseResponse {
     HttpResponse();
     virtual ~HttpResponse() override;
 
-    virtual ReturnCode Send(BaseTcpStream &socket) const override;
+    virtual int Send(BaseTcpStream &socket) const override;
 
-    virtual void SetPhxRpcResult(const int result) override;
-    virtual void DispatchErr() override;
+    virtual void SetFake(FakeReason reason) override;
 
-    virtual ReturnCode ModifyResp(const bool keep_alive, const std::string &version) override;
+    virtual int Modify(const bool keep_alive, const std::string &version) override;
 
-    void SetStatusCode(int status_code);
-    int GetStatusCode() const;
+    virtual int result() override;
+    virtual void set_result(const int result) override;
 
-    void SetReasonPhrase(const char *reason_phrase);
-    const char *GetReasonPhrase() const;
+    void set_status_code(int status_code);
+    int status_code() const;
+
+    void set_reason_phrase(const char *reason_phrase);
+    const char *reason_phrase() const;
 
   private:
-    int status_code_;  //200
-    char reason_phrase_[128];  //OK
+    int status_code_;
+    char reason_phrase_[128];
 };
 
 

@@ -19,39 +19,39 @@ permissions and limitations under the License.
 See the AUTHORS file for names of contributors.
 */
 
-const char * PHXRPC_EPOLL_SERVER_MAIN_TEMPLATE =
+const char *PHXRPC_EPOLL_SERVER_MAIN_TEMPLATE =
         R"(
 
 #include <iostream>
-#include <memory>
-#include <unistd.h>
 #include <signal.h>
+#include <unistd.h>
+
+#include "phxrpc/comm.h"
+#include "phxrpc/file.h"
+#include "phxrpc/http.h"
+#include "phxrpc/msg.h"
+#include "phxrpc/rpc.h"
 
 #include "$DispatcherFile$.h"
 #include "$ServiceImplFile$.h"
 #include "$ServerConfigFile$.h"
 
-#include "phxrpc/rpc.h"
-#include "phxrpc/msg.h"
-#include "phxrpc/file.h"
-
 
 using namespace std;
 
 
-void Dispatch(const phxrpc::BaseRequest *request,
-              phxrpc::BaseResponse *response,
-              phxrpc::DispatcherArgs_t *args) {
-    ServiceArgs_t *service_args = (ServiceArgs_t *)(args->service_args);
+void Dispatch(const phxrpc::BaseRequest &req,
+              phxrpc::BaseResponse *const resp,
+              phxrpc::DispatcherArgs_t *const args) {
+    ServiceArgs_t *service_args{(ServiceArgs_t *)(args->service_args)};
 
     $ServiceImplClass$ service(*service_args);
     $DispatcherClass$ dispatcher(service, args);
 
     phxrpc::BaseDispatcher<$DispatcherClass$> base_dispatcher(
-            dispatcher, $DispatcherClass$::GetMqttFuncMap(),
-            $DispatcherClass$::GetURIFuncMap());
-    if (!base_dispatcher.Dispatch(request, response)) {
-        response->DispatchErr();
+            dispatcher, $DispatcherClass$::GetURIFuncMap());
+    if (!base_dispatcher.Dispatch(req, resp)) {
+        resp->SetFake(phxrpc::BaseResponse::FakeReason::DISPATCH_ERROR);
     }
 }
 
@@ -71,22 +71,22 @@ int main(int argc, char **argv) {
     int c;
     while (EOF != (c = getopt(argc, argv, "c:vl:d"))) {
         switch (c) {
-            case 'c' : config_file = optarg; break;
-            case 'd' : daemonize = true; break;
-            case 'l' : log_level = atoi(optarg); break;
+            case 'c': config_file = optarg; break;
+            case 'd': daemonize = true; break;
+            case 'l': log_level = atoi(optarg); break;
 
-            case 'v' :
+            case 'v':
             default: ShowUsage(argv[0]); break;
         }
     }
 
     if (daemonize) phxrpc::ServerUtils::Daemonize();
 
-    assert(signal(SIGPIPE, SIG_IGN) != SIG_ERR);
+    PHXRPC_ASSERT(signal(SIGPIPE, SIG_IGN) != SIG_ERR);
 
-    //set customize log/monitor
+    // set customize log / monitor
     //phxrpc::setlog(openlog, closelog, vlog);
-    //phxrpc::MonitorFactory::SetFactory(new YourSelfsMonitorFactory());
+    //phxrpc::MonitorFactory::SetFactory(new YourMonitorFactory());
 
     if (nullptr == config_file) ShowUsage(argv[0]);
 
@@ -96,7 +96,7 @@ int main(int argc, char **argv) {
     if (log_level > 0) config.GetHshaServerConfig().SetLogLevel(log_level);
 
     phxrpc::openlog(argv[0], config.GetHshaServerConfig().GetLogDir(),
-            config.GetHshaServerConfig().GetLogLevel());
+                    config.GetHshaServerConfig().GetLogLevel());
 
     ServiceArgs_t service_args;
     service_args.config = &config;
@@ -113,39 +113,39 @@ int main(int argc, char **argv) {
 
 //////////////////////////////////////////////////////////////////////
 
-const char * PHXRPC_EPOLL_UTHREAD_SERVER_MAIN_TEMPLATE =
+const char *PHXRPC_EPOLL_UTHREAD_SERVER_MAIN_TEMPLATE =
         R"(
 
 #include <iostream>
-#include <memory>
-#include <unistd.h>
 #include <signal.h>
+#include <unistd.h>
+
+#include "phxrpc/comm.h"
+#include "phxrpc/file.h"
+#include "phxrpc/http.h"
+#include "phxrpc/msg.h"
+#include "phxrpc/rpc.h"
 
 #include "$DispatcherFile$.h"
 #include "$ServiceImplFile$.h"
 #include "$ServerConfigFile$.h"
 
-#include "phxrpc/rpc.h"
-#include "phxrpc/msg.h"
-#include "phxrpc/file.h"
-
 
 using namespace std;
 
 
-void Dispatch(const phxrpc::BaseRequest *request,
-              phxrpc::BaseResponse *response,
-              phxrpc::DispatcherArgs_t *args) {
-    ServiceArgs_t *service_args = (ServiceArgs_t *)(args->service_args);
+void Dispatch(const phxrpc::BaseRequest &req,
+              phxrpc::BaseResponse *const resp,
+              phxrpc::DispatcherArgs_t *const args) {
+    ServiceArgs_t *service_args{(ServiceArgs_t *)(args->service_args)};
 
     $ServiceImplClass$ service(*service_args, args->server_worker_uthread_scheduler);
     $DispatcherClass$ dispatcher(service, args);
 
     phxrpc::BaseDispatcher<$DispatcherClass$> base_dispatcher(
-            dispatcher, $DispatcherClass$::GetMqttFuncMap(),
-            $DispatcherClass$::GetURIFuncMap());
-    if (!base_dispatcher.Dispatch(request, response)) {
-        response->DispatchErr();
+            dispatcher, $DispatcherClass$::GetURIFuncMap());
+    if (!base_dispatcher.Dispatch(req, resp)) {
+        resp->SetFake(phxrpc::BaseResponse::FakeReason::DISPATCH_ERROR);
     }
 }
 
@@ -163,24 +163,24 @@ int main(int argc, char **argv) {
     int log_level{-1};
     extern char *optarg;
     int c;
-    while (EOF != (c = getopt( argc, argv, "c:vl:d"))) {
+    while (EOF != (c = getopt(argc, argv, "c:vl:d"))) {
         switch (c) {
-            case 'c' : config_file = optarg; break;
-            case 'd' : daemonize = true; break;
-            case 'l' : log_level = atoi(optarg); break;
+            case 'c': config_file = optarg; break;
+            case 'd': daemonize = true; break;
+            case 'l': log_level = atoi(optarg); break;
 
-            case 'v' :
+            case 'v':
             default: ShowUsage(argv[0]); break;
         }
     }
 
     if (daemonize) phxrpc::ServerUtils::Daemonize();
 
-    assert(signal(SIGPIPE, SIG_IGN) != SIG_ERR);
+    PHXRPC_ASSERT(signal(SIGPIPE, SIG_IGN) != SIG_ERR);
 
-    //set customize log/monitor
+    // set customize log / monitor
     //phxrpc::setlog(openlog, closelog, vlog);
-    //phxrpc::MonitorFactory::SetFactory(new YourSelfsMonitorFactory());
+    //phxrpc::MonitorFactory::SetFactory(new YourMonitorFactory());
 
     if (nullptr == config_file) ShowUsage(argv[0]);
 
@@ -190,7 +190,7 @@ int main(int argc, char **argv) {
     if (log_level > 0) config.GetHshaServerConfig().SetLogLevel(log_level);
 
     phxrpc::openlog(argv[0], config.GetHshaServerConfig().GetLogDir(),
-            config.GetHshaServerConfig().GetLogLevel());
+                    config.GetHshaServerConfig().GetLogLevel());
 
     ServiceArgs_t service_args;
     service_args.config = &config;
@@ -207,7 +207,7 @@ int main(int argc, char **argv) {
 
 //////////////////////////////////////////////////////////////////////
 
-const char * PHXRPC_EPOLL_SERVER_CONFIG_HPP_TEMPLATE =
+const char *PHXRPC_EPOLL_SERVER_CONFIG_HPP_TEMPLATE =
         R"(
 
 #include "phxrpc/rpc.h"
@@ -231,7 +231,7 @@ class $ServerConfigClass$ {
 
 //////////////////////////////////////////////////////////////////////
 
-const char * PHXRPC_EPOLL_SERVER_CONFIG_CPP_TEMPLATE =
+const char *PHXRPC_EPOLL_SERVER_CONFIG_CPP_TEMPLATE =
         R"(
 
 #include "$ServerConfigFile$.h"
@@ -249,7 +249,7 @@ bool $ServerConfigClass$::Read(const char *config_file) {
     bool ret{ep_server_config_.Read(config_file)};
 
     if (0 == strlen(ep_server_config_.GetPackageName())) {
-        ep_server_config_.SetPackageName($PackageName$);
+        ep_server_config_.SetPackageName($PackageNameExpression$);
     }
 
     return ret;
@@ -263,7 +263,7 @@ phxrpc::HshaServerConfig &$ServerConfigClass$::GetHshaServerConfig() {
 
 //////////////////////////////////////////////////////////////////////
 
-const char * PHXRPC_EPOLL_SERVER_ETC_TEMPLATE =
+const char *PHXRPC_EPOLL_SERVER_ETC_TEMPLATE =
         R"(
 
 [Server]
@@ -271,7 +271,7 @@ BindIP = 127.0.0.1
 Port = 16161
 MaxThreads = 16
 IOThreadCount = 3
-PackageName = $PackageName$
+PackageName = $PbPackageName$
 MaxConnections = 800000
 MaxQueueLength = 20480
 FastRejectThresholdMS = 20
@@ -288,7 +288,7 @@ SocketTimeoutMS = 5000
 
 //////////////////////////////////////////////////////////////////////
 
-const char * PHXRPC_EPOLL_UTHREAD_SERVER_ETC_TEMPLATE =
+const char *PHXRPC_EPOLL_UTHREAD_SERVER_ETC_TEMPLATE =
         R"(
 
 [Server]
@@ -298,7 +298,7 @@ MaxThreads = 16
 WorkerUThreadCount = 50
 WorkerUThreadStackSize = 65536
 IOThreadCount = 3
-PackageName = $PackageName$
+PackageName = $PbPackageName$
 MaxConnections = 800000
 MaxQueueLength = 20480
 FastRejectThresholdMS = 20
@@ -315,7 +315,7 @@ SocketTimeoutMS = 5000
 
 //////////////////////////////////////////////////////////////////////
 
-const char * PHXRPC_SERVER_MAKEFILE_TEMPLATE =
+const char *PHXRPC_SERVER_MAKEFILE_TEMPLATE =
         R"(
 
 include $PhxRPCMKDir$/phxrpc.mk
@@ -364,7 +364,7 @@ $ClientFile$.cpp: $StubFile$.h
 $ClientFile$.o: $StubFile$.h
 
 $StubFile$.h: $ProtoFile$
-	$(PHXRPC_ROOT)/codegen/phxrpc_pb2client $(PBFLAGS) -f $^ -d . -p mqtt
+	$(PHXRPC_ROOT)/codegen/phxrpc_pb2client $(PBFLAGS) -f $^ -d .
 
 ########## service ##########
 
@@ -376,7 +376,7 @@ $DispatcherFile$.cpp: $ServiceFile$.h
 $DispatcherFile$.o: $ServiceFile$.h
 
 $ServiceFile$.h: $ProtoFile$
-	$(PHXRPC_ROOT)/codegen/phxrpc_pb2service $(PBFLAGS) -f $^ -d . -p mqtt
+	$(PHXRPC_ROOT)/codegen/phxrpc_pb2service $(PBFLAGS) -f $^ -d .
 
 ########## tool ##########
 
@@ -388,7 +388,7 @@ $ToolMainFile$.cpp: $ToolFile$.h
 $ToolMainFile$.o: $ToolFile$.h
 
 $ToolFile$.h: $ProtoFile$
-	$(PHXRPC_ROOT)/codegen/phxrpc_pb2tool $(PBFLAGS) -f $^ -d . -p mqtt
+	$(PHXRPC_ROOT)/codegen/phxrpc_pb2tool $(PBFLAGS) -f $^ -d .
 
 clean:
 	@($(RM) $(TARGETS))
@@ -400,7 +400,7 @@ clean:
 
 /////////////////////////////////////////////////////////////////////
 
-const char * PHXRPC_UTHREAD_SERVER_MAKEFILE_TEMPLATE =
+const char *PHXRPC_UTHREAD_SERVER_MAKEFILE_TEMPLATE =
         R"(
 
 include $PhxRPCMKDir$/phxrpc.mk
@@ -452,7 +452,7 @@ $ClientFile$_uthread.cpp: $StubFile$.h
 $ClientFile$_uthread.o: $StubFile$.h
 
 $StubFile$.h: $ProtoFile$
-	$(PHXRPC_ROOT)/codegen/phxrpc_pb2client $(PBFLAGS) -f $^ -d . -u -p mqtt
+	$(PHXRPC_ROOT)/codegen/phxrpc_pb2client $(PBFLAGS) -f $^ -d . -u
 
 ########## service ##########
 
@@ -464,7 +464,7 @@ $DispatcherFile$.cpp: $ServiceFile$.h
 $DispatcherFile$.o: $ServiceFile$.h
 
 $ServiceFile$.h: $ProtoFile$
-	$(PHXRPC_ROOT)/codegen/phxrpc_pb2service $(PBFLAGS) -f $^ -d . -u -p mqtt
+	$(PHXRPC_ROOT)/codegen/phxrpc_pb2service $(PBFLAGS) -f $^ -d . -u
 
 ########## tool ##########
 
@@ -476,7 +476,7 @@ $ToolMainFile$.cpp: $ToolFile$.h
 $ToolMainFile$.o: $ToolFile$.h
 
 $ToolFile$.h: $ProtoFile$
-	$(PHXRPC_ROOT)/codegen/phxrpc_pb2tool $(PBFLAGS) -f $^ -d . -p mqtt
+	$(PHXRPC_ROOT)/codegen/phxrpc_pb2tool $(PBFLAGS) -f $^ -d .
 
 clean:
 	@($(RM) $(TARGETS))
